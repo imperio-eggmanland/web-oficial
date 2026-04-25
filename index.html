@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Imperio Eggman — Sitio Oficial</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --red: #e60000;
+      --yellow: #ffd000;
+      --dark: #0a0a0a;
+      --chrome: #c0c0c0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background-color: var(--dark);
+      color: var(--chrome);
+      font-family: 'Share Tech Mono', monospace;
+      overflow-x: hidden;
+      cursor: crosshair;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom, transparent 0px, transparent 3px,
+        rgba(0,0,0,0.18) 3px, rgba(0,0,0,0.18) 4px
+      );
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* ── INTRO SCREEN ── */
+    #intro-screen {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      cursor: pointer;
+      transition: opacity 0.9s ease;
+    }
+    #intro-screen .intro-logo {
+      font-size: 7rem;
+      animation: bob 2s ease-in-out infinite;
+      filter: drop-shadow(0 0 30px rgba(230,0,0,0.7));
+    }
+    #intro-screen .intro-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.8rem, 5vw, 3.5rem);
+      font-weight: 900;
+      color: var(--yellow);
+      text-shadow: 0 0 30px rgba(255,208,0,0.5), 3px 3px 0 var(--red);
+      text-align: center;
+      animation: flicker 3s ease-in-out infinite;
+    }
+    #intro-screen .intro-sub {
+      font-size: 0.8rem;
+      color: var(--red);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      animation: blink 1.2s step-end infinite;
+    }
+    #intro-screen .intro-hint {
+      font-size: 0.65rem;
+      color: #444;
+      letter-spacing: 0.15em;
+      margin-top: -1rem;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── MUSIC TOGGLE ── */
+    #music-btn {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      background: rgba(0,0,0,0.85);
+      border: 1px solid var(--red);
+      color: var(--chrome);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.55rem;
+      letter-spacing: 0.15em;
+      padding: 0.55rem 1rem;
+      cursor: pointer;
+      z-index: 600;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      display: none;
+    }
+    #music-btn:hover { background: var(--red); color: #fff; }
+    #music-btn.playing { border-color: var(--yellow); color: var(--yellow); }
+
+    /* ── VOLUME SLIDER ── */
+    #vol-wrap {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 9rem;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      z-index: 600;
+    }
+    #vol-wrap label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.5rem;
+      color: #555;
+      letter-spacing: 0.1em;
+    }
+    #vol-slider {
+      -webkit-appearance: none;
+      width: 80px;
+      height: 3px;
+      background: #333;
+      outline: none;
+      border-radius: 0;
+    }
+    #vol-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 10px; height: 10px;
+      background: var(--red);
+      cursor: pointer;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 40%, #3a0000 0%, transparent 70%),
+        repeating-conic-gradient(from 0deg at 50% 50%, #111 0deg 10deg, #1a1a1a 10deg 20deg);
+      text-align: center;
+      padding: 2rem;
+      overflow: hidden;
+    }
+    .gear-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 3px dashed rgba(230,0,0,0.25);
+      animation: spin linear infinite;
+    }
+    .gear-ring:nth-child(1){width:500px;height:500px;top:50%;left:50%;transform:translate(-50%,-50%);animation-duration:30s;}
+    .gear-ring:nth-child(2){width:700px;height:700px;top:50%;left:50%;transform:translate(-50%,-50%);animation-duration:50s;animation-direction:reverse;border-color:rgba(255,208,0,0.12);}
+    .gear-ring:nth-child(3){width:320px;height:320px;top:50%;left:50%;transform:translate(-50%,-50%);animation-duration:18s;border-color:rgba(230,0,0,0.15);}
+    @keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+
+    .egg-bg {
+      position:absolute;font-size:22rem;top:50%;left:50%;
+      transform:translate(-50%,-52%);opacity:0.04;filter:blur(4px);
+      pointer-events:none;user-select:none;line-height:1;
+    }
+    .badge {
+      display:inline-block;background:var(--red);color:#fff;
+      font-family:'Orbitron',sans-serif;font-size:0.65rem;letter-spacing:0.2em;
+      text-transform:uppercase;padding:0.3rem 1rem;
+      clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);
+      margin-bottom:1.5rem;animation:pulse-badge 2s ease-in-out infinite;
+    }
+    @keyframes pulse-badge { 0%,100%{opacity:1} 50%{opacity:0.7} }
+    .logo-wrap { position:relative;z-index:2;margin-bottom:1rem; }
+    h1 {
+      font-family:'Orbitron',sans-serif;font-weight:900;
+      font-size:clamp(2.8rem,8vw,6rem);line-height:1;
+      text-transform:uppercase;letter-spacing:0.05em;color:var(--yellow);
+      text-shadow:0 0 20px rgba(255,208,0,0.6),0 0 60px rgba(255,208,0,0.3),
+        4px 4px 0 var(--red),8px 8px 0 #7a0000;
+      animation:flicker 6s ease-in-out infinite;
+    }
+    @keyframes flicker {
+      0%,95%,100%{opacity:1} 96%{opacity:0.85} 97%{opacity:1} 98%{opacity:0.9}
+    }
+    h1 span {
+      display:block;font-size:0.45em;color:var(--red);
+      letter-spacing:0.3em;text-shadow:0 0 12px rgba(230,0,0,0.8);margin-bottom:0.2em;
+    }
+    .eggman-emoji {
+      font-size:clamp(5rem,12vw,9rem);line-height:1;display:block;
+      margin:1.5rem auto;filter:drop-shadow(0 0 20px rgba(230,0,0,0.6));
+      animation:bob 3s ease-in-out infinite;
+    }
+    @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+    .tagline {
+      font-family:'Orbitron',sans-serif;font-size:clamp(0.75rem,2vw,1rem);
+      letter-spacing:0.15em;color:var(--chrome);opacity:0.7;margin-top:1rem;
+    }
+    .scroll-hint {
+      position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);
+      font-size:0.7rem;letter-spacing:0.2em;color:var(--red);opacity:0.6;
+      animation:bounce 2s ease-in-out infinite;
+    }
+    @keyframes bounce {
+      0%,100%{transform:translateX(-50%) translateY(0)}
+      50%{transform:translateX(-50%) translateY(8px)}
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      display:flex;align-items:center;gap:1rem;
+      padding:0 2rem;margin:0 auto;max-width:900px;
+    }
+    .divider::before,.divider::after {
+      content:'';flex:1;height:2px;
+      background:linear-gradient(to right,transparent,var(--red),transparent);
+    }
+    .divider-icon { font-size:1.5rem; }
+
+    /* ── SECTIONS ── */
+    section { max-width:900px;margin:0 auto;padding:5rem 2rem; }
+    .section-label {
+      font-family:'Orbitron',sans-serif;font-size:0.6rem;letter-spacing:0.35em;
+      color:var(--red);text-transform:uppercase;margin-bottom:0.8rem;
+    }
+    h2 {
+      font-family:'Orbitron',sans-serif;font-weight:700;
+      font-size:clamp(1.6rem,4vw,2.5rem);color:var(--yellow);
+      text-shadow:2px 2px 0 #7a0000,0 0 20px rgba(255,208,0,0.3);
+      margin-bottom:1.5rem;
+    }
+
+    /* ── DESC CARD ── */
+    .desc-card {
+      background:linear-gradient(135deg,#1a0000 0%,#0f0f0f 60%,#1a1000 100%);
+      border:1px solid rgba(230,0,0,0.3);border-left:4px solid var(--red);
+      padding:2.5rem;position:relative;overflow:hidden;
+    }
+    .desc-card::before {
+      content:'DR.EGGMAN';position:absolute;top:1rem;right:1.5rem;
+      font-family:'Orbitron',sans-serif;font-size:3rem;font-weight:900;
+      color:rgba(230,0,0,0.05);pointer-events:none;
+    }
+    .desc-card p { font-size:1.05rem;line-height:1.9;color:#c8c8c8; }
+    .desc-card p strong { color:var(--yellow); }
+
+    /* ── BADNIK ── */
+    .badnik-section { text-align:center; }
+    .badnik-card {
+      background:linear-gradient(145deg,#1f0000 0%,#0a0a0a 50%,#1f0800 100%);
+      border:2px solid var(--red);padding:3.5rem 2rem;
+      position:relative;overflow:hidden;
+    }
+    .badnik-card::after {
+      content:'';position:absolute;inset:0;
+      background:repeating-linear-gradient(45deg,transparent,transparent 20px,
+        rgba(230,0,0,0.03) 20px,rgba(230,0,0,0.03) 21px);
+      pointer-events:none;
+    }
+    .badnik-card h2 { font-size:clamp(1.4rem,4vw,2.2rem);margin-bottom:1rem; }
+    .badnik-card p { font-size:1rem;line-height:1.8;max-width:600px;margin:0 auto 2rem;color:#bbb; }
+    .cta-btn {
+      display:inline-block;background:var(--red);color:#fff;
+      font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.85rem;
+      letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;
+      padding:1rem 2.5rem;
+      clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);
+      border:none;cursor:pointer;transition:all 0.2s;
+      box-shadow:0 0 20px rgba(230,0,0,0.4);position:relative;z-index:1;
+    }
+    .cta-btn:hover {
+      background:var(--yellow);color:#000;
+      box-shadow:0 0 40px rgba(255,208,0,0.6);transform:translateY(-2px);
+    }
+
+    /* ── SOCIAL ── */
+    .social-section { text-align:center; }
+    .social-section h2 { margin-bottom:0.5rem; }
+    .social-section .sub { font-size:0.85rem;color:#777;letter-spacing:0.1em;margin-bottom:3rem; }
+    .social-grid { display:flex;flex-wrap:wrap;gap:1.2rem;justify-content:center; }
+    .social-card {
+      display:flex;flex-direction:column;align-items:center;
+      justify-content:center;gap:0.8rem;background:#111;
+      border:1px solid rgba(255,255,255,0.08);padding:2rem 2.5rem;
+      text-decoration:none;color:var(--chrome);min-width:180px;
+      flex:1 1 160px;max-width:240px;transition:all 0.25s ease;
+      position:relative;overflow:hidden;
+    }
+    .social-card::before {
+      content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
+      background:var(--card-color,var(--red));transform:scaleX(0);
+      transform-origin:left;transition:transform 0.3s ease;
+    }
+    .social-card:hover::before { transform:scaleX(1); }
+    .social-card:hover {
+      border-color:var(--card-color,var(--red));background:#1a1a1a;
+      transform:translateY(-5px);
+      box-shadow:0 10px 30px rgba(0,0,0,0.5),0 0 20px rgba(var(--card-rgb,230,0,0),0.2);
+    }
+    .social-card.discord{--card-color:#5865F2;--card-rgb:88,101,242;}
+    .social-card.youtube{--card-color:#FF0000;--card-rgb:255,0,0;}
+    .social-card.tiktok{--card-color:#00f2ea;--card-rgb:0,242,234;}
+    .social-icon { font-size:2.5rem;line-height:1; }
+    .social-name {
+      font-family:'Orbitron',sans-serif;font-size:0.75rem;
+      letter-spacing:0.15em;text-transform:uppercase;color:#eee;
+    }
+    .social-handle { font-size:0.7rem;color:#666;letter-spacing:0.05em; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top:1px solid rgba(230,0,0,0.15);padding:2rem;
+      text-align:center;font-size:0.7rem;color:#444;letter-spacing:0.15em;
+    }
+    footer strong { color:var(--red); }
+
+    /* ── CORNERS ── */
+    .corner-tl,.corner-br {
+      position:fixed;width:60px;height:60px;pointer-events:none;z-index:100;
+    }
+    .corner-tl{top:1rem;left:1rem;border-top:2px solid var(--red);border-left:2px solid var(--red);}
+    .corner-br{bottom:1rem;right:1rem;border-bottom:2px solid var(--red);border-right:2px solid var(--red);}
+
+    /* ── STATUS BAR ── */
+    .status-bar {
+      position:fixed;top:0;left:0;right:0;background:rgba(230,0,0,0.9);
+      color:#fff;font-size:0.6rem;letter-spacing:0.2em;padding:0.3rem 1rem;
+      text-align:center;z-index:500;overflow:hidden;
+    }
+    .status-bar span {
+      display:inline-block;animation:marquee 22s linear infinite;white-space:nowrap;
+    }
+    @keyframes marquee { from{transform:translateX(100vw)} to{transform:translateX(-100%)} }
+
+    @media(max-width:600px){
+      .social-grid{gap:0.8rem;}
+      .social-card{min-width:130px;padding:1.5rem 1rem;}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Audio principal -->
+  <audio id="bg-music" loop preload="auto">
+    <source src="bg.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- ══ INTRO ══ -->
+  <div id="intro-screen" onclick="enterSite()">
+    <div class="intro-logo">🥚</div>
+    <div class="intro-title">IMPERIO EGGMAN</div>
+    <div class="intro-sub">[ Haz clic para entrar ]</div>
+  </div>
+
+  <!-- Controles de música -->
+  <button id="music-btn" onclick="toggleMusic()">&#9654; MUSICA</button>
+  <div id="vol-wrap">
+    <label>VOL</label>
+    <input id="vol-slider" type="range" min="0" max="1" step="0.01" value="0.6" oninput="setVolume(this.value)">
+  </div>
+
+  <!-- Status ticker -->
+  <div class="status-bar">
+    <span>&#9654; BIENVENIDO AL IMPERIO EGGMAN &#9664; &nbsp;&nbsp;&nbsp; SISTEMA OPERATIVO: EGG-NET v9.9.9 &nbsp;&nbsp;&nbsp; BADNIKS ACTIVOS: 999+ &nbsp;&nbsp;&nbsp; BLAZE DEJA LAS MULTICUENTAS &nbsp;&nbsp;&nbsp; CUBOT CRUZIFICADO CORRECTAMENTE &nbsp;&nbsp;&nbsp; SONIC: NEUTRALIZADO (pronto&#8482;) &nbsp;&nbsp;&nbsp; EL DR. EGGMAN CONQUISTARA EL MUNDO &nbsp;&nbsp;&nbsp;</span>
+  </div>
+
+  <div class="corner-tl"></div>
+  <div class="corner-br"></div>
+
+  <!-- ══ HERO ══ -->
+  <header>
+    <div class="gear-ring"></div>
+    <div class="gear-ring"></div>
+    <div class="gear-ring"></div>
+    <div class="egg-bg">🥚</div>
+    <div class="logo-wrap">
+      <div class="badge">&#9632; Sitio Oficial &#9632;</div>
+      <h1><span>Imperio</span>Eggman</h1>
+      <span class="eggman-emoji">🥚</span>
+      <p class="tagline">« El futuro es robótico. El futuro soy yo. »</p>
+    </div>
+    <div class="scroll-hint">&#9660; DESPLAZA PARA UNIRTE &#9660;</div>
+  </header>
+
+  <!-- ══ DESCRIPTION ══ -->
+  <section>
+    <div class="divider"><span class="divider-icon">&#9632;</span></div>
+    <br/><br/>
+    <p class="section-label">// archivo_001 — Sobre nosotros</p>
+    <h2>¿Qué es el Imperio Eggman?</h2>
+    <div class="desc-card">
+      <p>
+        Bienvenido, ciudadano. Estás en la <strong>página oficial del Imperio Eggman</strong>, el reino tecnológico más avanzado, más poderoso y más glorioso que el mundo jamás ha conocido.<br/><br/>
+        Fundado por el genio supremo <strong>Dr. "Eggman" Robotnik</strong>, este imperio representa el pináculo de la ingeniería, la robótica y la dominación global.<br/><br/>
+        Aquí encontrarás las últimas noticias del Imperio, recursos para futuros Badniks, y el canal oficial donde el <strong>Doctor comparte su visión de un mundo mecanizado, perfecto y bajo su mandato eterno</strong>. Porque si el futuro va a ser robótico, debería llevar nuestra marca.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══ BADNIK CTA ══ -->
+  <section class="badnik-section">
+    <div class="divider"><span class="divider-icon">&#9632;</span></div>
+    <br/><br/>
+    <div class="badnik-card">
+      <p class="section-label">// archivo_002 — Reclutamiento</p>
+      <h2>Mas Eggman que nunca,<br/>¿Qué esperas para ser un Badnik?</h2>
+      <p>
+        El Imperio necesita soldados leales, eficientes y a prueba de Sonic. Únete a las filas del ejército mecanizado más temido del planeta. Tu transformación te espera.
+      </p>
+      <a class="cta-btn" href="https://discord.gg/63zfHZ9jS" target="_blank" rel="noopener">
+        UNIRSE AL IMPERIO
+      </a>
+    </div>
+  </section>
+
+  <!-- ══ SOCIAL ══ -->
+  <section class="social-section">
+    <div class="divider"><span class="divider-icon">&#9632;</span></div>
+    <br/><br/>
+    <p class="section-label">// archivo_003 — Transmisiones</p>
+    <h2>Síguenos en nuestras redes</h2>
+    <p class="sub">Mantente al tanto de las conquistas del Imperio en todas las plataformas.</p>
+    <div class="social-grid">
+
+      <a class="social-card discord" href="https://discord.gg/63zfHZ9jS" target="_blank" rel="noopener">
+        <div class="social-icon">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.012.043.028.055a19.9 19.9 0 0 0 5.993 3.03.077.077 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+        </div>
+        <span class="social-name">Discord</span>
+        <span class="social-handle">Servidor Oficial</span>
+      </a>
+
+      <a class="social-card youtube" href="https://youtube.com/@eggmanmaseggman?si=hbAhSSTjxgfA8dSa" target="_blank" rel="noopener">
+        <div class="social-icon">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        </div>
+        <span class="social-name">YouTube</span>
+        <span class="social-handle">@eggmanmaseggman</span>
+      </a>
+
+      <a class="social-card tiktok" href="https://www.tiktok.com/@ourcome.randoms?_r=1&_t=ZS-95pGW3AnQzk" target="_blank" rel="noopener">
+        <div class="social-icon">
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="#ffffff"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.76a4.85 4.85 0 01-1.01-.07z"/></svg>
+        </div>
+        <span class="social-name">TikTok</span>
+        <span class="social-handle">@ourcome.randoms</span>
+      </a>
+
+    </div>
+  </section>
+
+  <footer>
+    <p>© <strong>IMPERIO EGGMAN</strong> — Todos los mundos reservados. Sonic no está invitado.</p>
+    <br/>
+    <p style="font-size:0.6rem;opacity:0.4">EGG-NET SYSTEM v9.9.9 · DOMINIO MUNDIAL EN PROGRESO&#8482;</p>
+  </footer>
+
+<script>
+// ══════════════════════════════════════════════
+//  AUDIO ENGINE
+// ══════════════════════════════════════════════
+const music = document.getElementById('bg-music');
+music.volume = 0.6;
+
+let siteEntered = false;
+let musicOn = true;
+let sfxCtx = null;
+
+function getSfxCtx() {
+  if (!sfxCtx) sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return sfxCtx;
+}
+
+// ── EFECTOS DE SONIDO (Web Audio API) ─────────
+
+// Sonido de entrada: "Badnik activate" — chispazo + acorde marcial
+function playEnterSfx() {
+  const ac = getSfxCtx();
+  const t = ac.currentTime;
+
+  // Chispazo eléctrico
+  const spark = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.08), ac.sampleRate);
+  const sd = spark.getChannelData(0);
+  for (let i = 0; i < sd.length; i++) sd[i] = (Math.random() * 2 - 1) * (1 - i / sd.length);
+  const sn = ac.createBufferSource();
+  const sf = ac.createBiquadFilter();
+  const sg = ac.createGain();
+  sf.type = 'bandpass'; sf.frequency.value = 3500; sf.Q.value = 0.4;
+  sg.gain.setValueAtTime(0.5, t);
+  sg.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+  sn.buffer = spark; sn.connect(sf); sf.connect(sg); sg.connect(ac.destination);
+  sn.start(t);
+
+  // Barrido descendente tipo "robotnik laugh"
+  const sweep = ac.createOscillator();
+  const swg = ac.createGain();
+  sweep.type = 'sawtooth';
+  sweep.frequency.setValueAtTime(800, t + 0.05);
+  sweep.frequency.exponentialRampToValueAtTime(120, t + 0.4);
+  swg.gain.setValueAtTime(0, t + 0.05);
+  swg.gain.linearRampToValueAtTime(0.18, t + 0.07);
+  swg.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+  sweep.connect(swg); swg.connect(ac.destination);
+  sweep.start(t + 0.05); sweep.stop(t + 0.5);
+
+  // Acorde marcial final
+  [220, 277, 330, 415].forEach((f, i) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'square';
+    o.frequency.value = f;
+    const st = t + 0.5;
+    g.gain.setValueAtTime(0, st);
+    g.gain.linearRampToValueAtTime(0.08, st + 0.03);
+    g.gain.linearRampToValueAtTime(0.05, st + 0.3);
+    g.gain.linearRampToValueAtTime(0, st + 0.7);
+    o.connect(g); g.connect(ac.destination);
+    o.start(st); o.stop(st + 0.75);
+  });
+}
+
+// Hover: "blip" electrónico estilo SA2
+function playHover() {
+  const ac = getSfxCtx();
+  const t = ac.currentTime;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(880, t);
+  o.frequency.linearRampToValueAtTime(1200, t + 0.04);
+  g.gain.setValueAtTime(0.08, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+  o.connect(g); g.connect(ac.destination);
+  o.start(t); o.stop(t + 0.08);
+}
+
+// Clic: "beep confirm" + golpe metálico
+function playClick() {
+  const ac = getSfxCtx();
+  const t = ac.currentTime;
+
+  // Doble beep confirmación
+  [880, 1320].forEach((f, i) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'square';
+    o.frequency.value = f;
+    const st = t + i * 0.06;
+    g.gain.setValueAtTime(0, st);
+    g.gain.linearRampToValueAtTime(0.09, st + 0.01);
+    g.gain.linearRampToValueAtTime(0, st + 0.055);
+    o.connect(g); g.connect(ac.destination);
+    o.start(st); o.stop(st + 0.07);
+  });
+
+  // Golpe metálico de fondo
+  const o2 = ac.createOscillator(), g2 = ac.createGain();
+  o2.type = 'triangle';
+  o2.frequency.setValueAtTime(200, t);
+  o2.frequency.exponentialRampToValueAtTime(60, t + 0.1);
+  g2.gain.setValueAtTime(0.15, t);
+  g2.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+  o2.connect(g2); g2.connect(ac.destination);
+  o2.start(t); o2.stop(t + 0.14);
+}
+
+// ── MÚSICA ────────────────────────────────────
+function startMusic() {
+  music.currentTime = 0;
+  music.play().catch(() => {});
+  musicOn = true;
+  updateMusicBtn();
+}
+
+function toggleMusic() {
+  if (musicOn) {
+    music.pause();
+    musicOn = false;
+  } else {
+    music.play();
+    musicOn = true;
+  }
+  updateMusicBtn();
+  playClick();
+}
+
+function setVolume(v) {
+  music.volume = parseFloat(v);
+}
+
+function updateMusicBtn() {
+  const btn = document.getElementById('music-btn');
+  if (musicOn) {
+    btn.textContent = '⏸ MUSICA';
+    btn.classList.add('playing');
+  } else {
+    btn.textContent = '▶ MUSICA';
+    btn.classList.remove('playing');
+  }
+}
+
+// ── ENTRAR AL SITIO ───────────────────────────
+function enterSite() {
+  if (siteEntered) return;
+  siteEntered = true;
+
+  // SFX de entrada
+  playEnterSfx();
+
+  // Fade out intro
+  const intro = document.getElementById('intro-screen');
+  intro.style.opacity = '0';
+  setTimeout(() => {
+    intro.style.display = 'none';
+    document.getElementById('music-btn').style.display = 'block';
+    document.getElementById('vol-wrap').style.display = 'flex';
+    updateMusicBtn();
+  }, 900);
+
+  // Música empieza tras el SFX de entrada
+  setTimeout(() => startMusic(), 700);
+}
+
+// ── EVENTOS DE HOVER Y CLIC ───────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  let lastHover = 0;
+
+  document.querySelectorAll('a, button, .cta-btn').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      if (!siteEntered) return;
+      const now = Date.now();
+      if (now - lastHover > 100) { playHover(); lastHover = now; }
+    });
+    el.addEventListener('click', () => {
+      if (siteEntered) playClick();
+    });
+  });
+
+  // Clic en cualquier parte
+  document.addEventListener('click', e => {
+    if (!siteEntered) return;
+    if (!e.target.closest('a, button, .cta-btn')) playClick();
+  });
+});
+</script>
+</body>
+</html>
