@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Imperio Eggman — Sitio Oficial</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    :root { --red:#e60000; --yellow:#ffd000; --dark:#0a0a0a; --chrome:#c0c0c0; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body {
+      background-color:var(--dark); color:var(--chrome);
+      font-family:'Share Tech Mono',monospace;
+      overflow-x:hidden; cursor:crosshair;
+    }
+    body::before {
+      content:''; position:fixed; inset:0;
+      background:repeating-linear-gradient(to bottom,transparent 0px,transparent 3px,rgba(0,0,0,0.15) 3px,rgba(0,0,0,0.15) 4px);
+      pointer-events:none; z-index:998;
+    }
+
+    /* ══ INTRO ══ */
+    #intro-screen {
+      position:fixed; inset:0; background:#000; z-index:9999;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:2rem; cursor:pointer; transition:opacity 0.9s ease;
+    }
+    #intro-screen .intro-logo {
+      width:clamp(120px,22vw,200px); animation:bob 2s ease-in-out infinite;
+      filter:drop-shadow(0 0 30px rgba(230,0,0,0.8));
+    }
+    #intro-screen .intro-title {
+      font-family:'Orbitron',sans-serif; font-size:clamp(1.8rem,5vw,3.5rem); font-weight:900;
+      color:var(--yellow); text-shadow:0 0 30px rgba(255,208,0,0.5),3px 3px 0 var(--red);
+      text-align:center; animation:flicker 3s ease-in-out infinite;
+    }
+    #intro-screen .intro-sub {
+      font-size:0.8rem; color:var(--red); letter-spacing:0.3em;
+      text-transform:uppercase; animation:blink 1.2s step-end infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ══ NAV ══ */
+    #topnav {
+      position:fixed; top:0; left:0; right:0; height:56px;
+      background:rgba(0,0,0,0.93); border-bottom:2px solid var(--red);
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 1.2rem; z-index:700; backdrop-filter:blur(6px);
+    }
+    #nav-left { display:flex; align-items:center; gap:0.5rem; }
+    #nav-logo-btn {
+      background:none; border:none; cursor:pointer; padding:0;
+      display:flex; align-items:center; gap:0.6rem;
+    }
+    #nav-logo-btn img {
+      width:36px; height:36px; object-fit:contain;
+      filter:drop-shadow(0 0 6px rgba(230,0,0,0.7)); transition:transform 0.2s,filter 0.2s;
+    }
+    #nav-logo-btn:hover img { transform:scale(1.15) rotate(-5deg); filter:drop-shadow(0 0 14px rgba(230,0,0,1)); }
+    #nav-logo-btn span {
+      font-family:'Orbitron',sans-serif; font-size:0.7rem; font-weight:700;
+      color:var(--yellow); letter-spacing:0.15em; text-transform:uppercase;
+    }
+
+    /* Sprites en nav */
+    .nav-sprite-btn {
+      background:none; border:none; cursor:pointer; padding:0;
+      display:none; position:relative; line-height:0;
+    }
+    .nav-sprite-btn img {
+      height:40px; width:auto; image-rendering:pixelated;
+      transition:transform 0.15s;
+      filter:drop-shadow(0 0 4px rgba(80,120,255,0.5));
+    }
+    .nav-sprite-btn:hover:not(.locked) img { transform:scale(1.2); }
+    .nav-sprite-btn.locked { cursor:not-allowed; }
+    .nav-sprite-btn.locked img { filter:grayscale(0.6) drop-shadow(0 0 4px rgba(255,0,0,0.5)); }
+    .nav-sprite-btn .sp-tip {
+      position:absolute;
+      top:115%;
+      left:50%;
+      transform:translateX(-50%);
+      background:rgba(0,0,0,0.92);
+      border:1px solid var(--red);
+      color:var(--chrome);
+      font-family:'Orbitron',sans-serif;
+      font-size:0.42rem;
+      letter-spacing:0.1em;
+      padding:0.2rem 0.5rem;
+      white-space:nowrap;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity 0.2s;
+    }
+    .nav-sprite-btn:hover .sp-tip { opacity:1; }
+    #eggman-nav-btn img { filter: drop-shadow(0 0 4px rgba(230,0,0,0.6));
+    }
+
+#eggman-nav-btn.locked img { filter: grayscale(0.6) drop-shadow(0 0 4px rgba(255,0,0,0.5));
+    }
+
+    /* Nav right */
+    #nav-menu-wrap { position:relative; }
+    #nav-toggle {
+      background:none; border:1px solid var(--red); color:var(--chrome);
+      font-family:'Orbitron',sans-serif; font-size:0.6rem; letter-spacing:0.15em;
+      padding:0.4rem 0.8rem; cursor:pointer; text-transform:uppercase; transition:all 0.2s;
+    }
+    #nav-toggle:hover { background:var(--red); color:#fff; }
+    #nav-dropdown {
+      position:absolute; top:calc(100% + 10px); right:0;
+      background:rgba(5,0,0,0.97); border:1px solid var(--red);
+      border-top:3px solid var(--red); min-width:240px;
+      display:none; flex-direction:column; overflow:hidden;
+    }
+    #nav-dropdown.open { display:flex; }
+    #nav-dropdown a {
+      display:flex; align-items:center; gap:0.8rem;
+      padding:0.85rem 1.2rem; text-decoration:none; color:var(--chrome);
+      font-family:'Orbitron',sans-serif; font-size:0.65rem; letter-spacing:0.12em;
+      text-transform:uppercase; border-bottom:1px solid rgba(230,0,0,0.15); transition:all 0.18s;
+    }
+    #nav-dropdown a:last-child { border-bottom:none; }
+    #nav-dropdown a:hover { background:rgba(230,0,0,0.15); color:var(--yellow); padding-left:1.6rem; }
+    .nav-icon-img { width:22px; height:22px; object-fit:contain; image-rendering:pixelated; flex-shrink:0; }
+
+    /* ══ MUSIC BTN ══ */
+    #music-btn {
+      position:fixed; bottom:1.5rem; left:1.5rem; background:rgba(0,0,0,0.85);
+      border:1px solid var(--red); color:var(--chrome); font-family:'Orbitron',sans-serif;
+      font-size:0.55rem; letter-spacing:0.15em; padding:0.55rem 1rem;
+      cursor:pointer; z-index:600; transition:all 0.2s; text-transform:uppercase; display:none;
+    }
+    #music-btn:hover { background:var(--red); color:#fff; }
+    #music-btn.playing { border-color:var(--yellow); color:var(--yellow); }
+    #vol-wrap {
+      position:fixed; bottom:1.5rem; left:9rem; display:none;
+      align-items:center; gap:0.5rem; z-index:600;
+    }
+    #vol-wrap label { font-family:'Orbitron',sans-serif; font-size:0.5rem; color:#555; letter-spacing:0.1em; }
+    #vol-slider { -webkit-appearance:none; width:80px; height:3px; background:#333; outline:none; }
+    #vol-slider::-webkit-slider-thumb { -webkit-appearance:none; width:10px; height:10px; background:var(--red); cursor:pointer; }
+
+    /* ══ STATUS BAR ══ */
+    .status-bar {
+      position:fixed; top:56px; left:0; right:0; background:rgba(230,0,0,0.88);
+      color:#fff; font-size:0.6rem; letter-spacing:0.18em; padding:0.28rem 1rem;
+      text-align:center; z-index:500; overflow:hidden;
+    }
+    .status-bar span { display:inline-block; animation:marquee 22s linear infinite; white-space:nowrap; }
+    @keyframes marquee { from{transform:translateX(100vw)} to{transform:translateX(-100%)} }
+
+    /* ══ CORNERS ══ */
+    .corner-tl,.corner-br { position:fixed; width:60px; height:60px; pointer-events:none; z-index:100; }
+    .corner-tl { top:1rem;left:1rem;border-top:2px solid var(--red);border-left:2px solid var(--red); }
+    .corner-br { bottom:1rem;right:1rem;border-bottom:2px solid var(--red);border-right:2px solid var(--red); }
+
+    /* ══ HEADER ══ */
+    header {
+      position:relative; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; min-height:100vh;
+      padding-top:95px; padding-left:2rem; padding-right:2rem;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 40%,#3a0000 0%,transparent 70%),
+        repeating-conic-gradient(from 0deg at 50% 50%,#111 0deg 10deg,#1a1a1a 10deg 20deg);
+      text-align:center; overflow:hidden;
+    }
+    .gear-ring { position:absolute; border-radius:50%; border:3px dashed rgba(230,0,0,0.22); animation:spin linear infinite; }
+    .gear-ring:nth-child(1){width:500px;height:500px;top:50%;left:50%;transform:translate(-50%,-50%);animation-duration:30s;}
+    .gear-ring:nth-child(2){width:700px;height:700px;top:50%;left:50%;transform:translate(-50%,-50%);animation-duration:50s;animation-direction:reverse;border-color:rgba(255,208,0,0.1);}
+    .gear-ring:nth-child(3){width:320px;height:320px;top:50%;left:50%;transform:translate(-50%,-50%);animation-duration:18s;border-color:rgba(230,0,0,0.13);}
+    @keyframes spin { to{transform:translate(-50%,-50%) rotate(360deg);} }
+
+    .logo-wrap { position:relative; z-index:2; margin-bottom:1rem; display:flex; flex-direction:column; align-items:center; }
+    .hero-logo {
+      width:clamp(140px,25vw,220px); animation:bob 3s ease-in-out infinite;
+      filter:drop-shadow(0 0 24px rgba(230,0,0,0.7)); margin-bottom:1.5rem; display:block;
+    }
+    @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+    .badge {
+      display:inline-block; background:var(--red); color:#fff;
+      font-family:'Orbitron',sans-serif; font-size:0.65rem; letter-spacing:0.2em;
+      text-transform:uppercase; padding:0.3rem 1rem;
+      clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);
+      margin-bottom:1.5rem; animation:pulse-badge 2s ease-in-out infinite;
+    }
+    @keyframes pulse-badge { 0%,100%{opacity:1} 50%{opacity:0.7} }
+    h1 {
+      font-family:'Orbitron',sans-serif; font-weight:900;
+      font-size:clamp(2.8rem,8vw,6rem); line-height:1;
+      text-transform:uppercase; letter-spacing:0.05em; color:var(--yellow);
+      text-shadow:0 0 20px rgba(255,208,0,0.6),0 0 60px rgba(255,208,0,0.3),4px 4px 0 var(--red),8px 8px 0 #7a0000;
+      animation:flicker 6s ease-in-out infinite;
+    }
+    @keyframes flicker { 0%,95%,100%{opacity:1} 96%{opacity:0.85} 97%{opacity:1} 98%{opacity:0.9} }
+    h1 span { display:block; font-size:0.45em; color:var(--red); letter-spacing:0.3em; text-shadow:0 0 12px rgba(230,0,0,0.8); margin-bottom:0.2em; }
+    .tagline { font-family:'Orbitron',sans-serif; font-size:clamp(0.75rem,2vw,1rem); letter-spacing:0.15em; color:var(--chrome); opacity:0.7; margin-top:1rem; }
+    .scroll-hint {
+      position:absolute; bottom:2rem; left:50%; transform:translateX(-50%);
+      font-size:0.7rem; letter-spacing:0.2em; color:var(--red); opacity:0.6;
+      animation:bounce 2s ease-in-out infinite;
+    }
+    @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(8px)} }
+
+    /* ══ SECTIONS ══ */
+    .section-wrap { max-width:900px; margin:0 auto; padding:5rem 2rem; }
+    .divider { display:flex; align-items:center; gap:1rem; margin-bottom:3rem; }
+    .divider::before,.divider::after { content:''; flex:1; height:2px; background:linear-gradient(to right,transparent,var(--red),transparent); }
+    .divider-icon { font-size:1.2rem; color:var(--red); }
+    .section-label { font-family:'Orbitron',sans-serif; font-size:0.6rem; letter-spacing:0.35em; color:var(--red); text-transform:uppercase; margin-bottom:0.8rem; }
+    h2 { font-family:'Orbitron',sans-serif; font-weight:700; font-size:clamp(1.6rem,4vw,2.5rem); color:var(--yellow); text-shadow:2px 2px 0 #7a0000,0 0 20px rgba(255,208,0,0.3); margin-bottom:1.5rem; }
+
+    /* ══ DESC CARD ══ */
+    #sobre { background:linear-gradient(180deg,#0a0a0a 0%,#0f0000 100%); }
+    .desc-card {
+      background:linear-gradient(135deg,#1a0000 0%,#0f0f0f 60%,#1a1000 100%);
+      border:1px solid rgba(230,0,0,0.3); border-left:4px solid var(--red);
+      padding:2.5rem; position:relative; overflow:hidden;
+    }
+    .desc-card::before { content:'DR.EGGMAN'; position:absolute; top:1rem; right:1.5rem; font-family:'Orbitron',sans-serif; font-size:3rem; font-weight:900; color:rgba(230,0,0,0.05); pointer-events:none; }
+    .desc-card p { font-size:1.05rem; line-height:1.9; color:#c8c8c8; }
+    .desc-card p strong { color:var(--yellow); }
+
+    /* ══ BADNIK ══ */
+    #badnik { background:#0a0a0a; text-align:center; }
+    .badnik-card {
+      background:linear-gradient(145deg,#1f0000 0%,#0a0a0a 50%,#1f0800 100%);
+      border:2px solid var(--red); padding:3.5rem 2rem; position:relative; overflow:hidden;
+    }
+    .badnik-card::after { content:''; position:absolute; inset:0; background:repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(230,0,0,0.03) 20px,rgba(230,0,0,0.03) 21px); pointer-events:none; }
+    .badnik-card h2 { font-size:clamp(1.4rem,4vw,2.2rem); margin-bottom:1rem; }
+    .badnik-card p { font-size:1rem; line-height:1.8; max-width:600px; margin:0 auto 2rem; color:#bbb; }
+    .cta-btn {
+      display:inline-block; background:var(--red); color:#fff;
+      font-family:'Orbitron',sans-serif; font-weight:700; font-size:0.85rem;
+      letter-spacing:0.15em; text-transform:uppercase; text-decoration:none;
+      padding:1rem 2.5rem; clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);
+      border:none; cursor:pointer; transition:all 0.2s;
+      box-shadow:0 0 20px rgba(230,0,0,0.4); position:relative; z-index:1;
+    }
+    .cta-btn:hover { background:var(--yellow); color:#000; box-shadow:0 0 40px rgba(255,208,0,0.6); transform:translateY(-2px); }
+
+    /* ══ MINECRAFT ══ */
+    #minecraft { background:linear-gradient(180deg,#0a0a0a 0%,#000a00 50%,#0a0a0a 100%); }
+    .mc-card { border:1px solid rgba(230,0,0,0.25); background:linear-gradient(135deg,#0a0000 0%,#050505 50%,#000a00 100%); overflow:hidden; position:relative; }
+    .mc-card::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(-45deg,transparent,transparent 15px,rgba(0,180,0,0.015) 15px,rgba(0,180,0,0.015) 16px); pointer-events:none; }
+    .mc-inner { padding:2.5rem; position:relative; z-index:1; }
+    .mc-top { display:flex; flex-direction:column; align-items:center; text-align:center; margin-bottom:2rem; }
+    .mc-badge { display:inline-flex; align-items:center; gap:0.5rem; background:rgba(255,140,0,0.15); border:1px solid rgba(255,140,0,0.4); color:#4dff4d; font-family:'Orbitron',sans-serif; font-size:0.55rem; letter-spacing:0.2em; text-transform:uppercase; padding:0.3rem 0.9rem; margin-bottom:1.5rem; }
+    .mc-badge::before { content:''; width:6px; height:6px; background:#ff8c00; border-radius:50%; animation:pulse-green 1.5s ease-in-out infinite; }
+    @keyframes pulse-green { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.7)} }
+    .mc-img-wrap { width:100%; max-width:700px; margin:0 auto 2rem; border:2px solid rgba(230,0,0,0.3); position:relative; overflow:hidden; }
+    .mc-img-wrap::after { content:'EGGMANLAND'; position:absolute; top:0.6rem; left:0.6rem; font-family:'Orbitron',sans-serif; font-size:0.5rem; letter-spacing:0.2em; color:rgba(255,255,255,0.4); background:rgba(0,0,0,0.5); padding:0.2rem 0.5rem; }
+    .mc-img-wrap img { width:100%; display:block; filter:brightness(0.9) saturate(1.1); transition:transform 0.4s,filter 0.4s; }
+    .mc-img-wrap:hover img { transform:scale(1.03); filter:brightness(1) saturate(1.3); }
+    .mc-desc { font-size:1rem; line-height:1.9; color:#c8c8c8; max-width:650px; margin:0 auto; }
+    .mc-desc strong { color:var(--yellow); }
+    .mc-desc .green { color:#4dff4d; }
+
+    /* ══ SOCIAL ══ */
+    #redes { background:#0a0a0a; text-align:center; }
+    .social-section-inner { text-align:center; }
+    .social-section-inner h2 { margin-bottom:0.5rem; }
+    .sub { font-size:0.85rem; color:#777; letter-spacing:0.1em; margin-bottom:3rem; }
+    .social-grid { display:flex; flex-wrap:wrap; gap:1.2rem; justify-content:center; }
+    .social-card {
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:0.8rem; background:#111; border:1px solid rgba(255,255,255,0.08);
+      padding:2rem 2.5rem; text-decoration:none; color:var(--chrome);
+      min-width:180px; flex:1 1 160px; max-width:240px;
+      transition:all 0.25s ease; position:relative; overflow:hidden;
+    }
+    .social-card::before { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:var(--card-color,var(--red)); transform:scaleX(0); transform-origin:left; transition:transform 0.3s ease; }
+    .social-card:hover::before { transform:scaleX(1); }
+    .social-card:hover { border-color:var(--card-color,var(--red)); background:#1a1a1a; transform:translateY(-5px); box-shadow:0 10px 30px rgba(0,0,0,0.5),0 0 20px rgba(var(--card-rgb,230,0,0),0.2); }
+    .social-card.discord{--card-color:#5865F2;--card-rgb:88,101,242;}
+    .social-card.youtube{--card-color:#FF0000;--card-rgb:255,0,0;}
+    .social-card.tiktok{--card-color:#00f2ea;--card-rgb:0,242,234;}
+    .social-icon { font-size:2.5rem; line-height:1; }
+    .social-name { font-family:'Orbitron',sans-serif; font-size:0.75rem; letter-spacing:0.15em; text-transform:uppercase; color:#eee; }
+    .social-handle { font-size:0.7rem; color:#666; letter-spacing:0.05em; }
+
+    /* ══ FOOTER PARADE ══ */
+    footer {
+      border-top:1px solid rgba(230,0,0,0.15); padding:2.5rem 2rem;
+      text-align:center; font-size:0.7rem; color:#444; letter-spacing:0.15em;
+      position:relative; overflow:hidden;
+    }
+    footer img.foot-logo { width:32px; opacity:0.3; margin-bottom:0.8rem; display:block; margin-left:auto; margin-right:auto; }
+    footer strong { color:var(--red); }
+
+    /* Badnik parade at footer */
+    .parade-wrap {
+      width:100%; overflow:hidden; height:70px;
+      position:relative; margin-bottom:1.5rem;
+      border-top:1px solid rgba(230,0,0,0.1); border-bottom:1px solid rgba(230,0,0,0.1);
+      background:rgba(230,0,0,0.03);
+    }
+    .parade-inner {
+      display:flex; align-items:flex-end; gap:3rem;
+      animation:parade 18s linear infinite;
+      white-space:nowrap; width:max-content;
+    }
+    @keyframes parade { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+    .parade-inner img {
+      height:55px; width:auto; image-rendering:pixelated;
+      filter:drop-shadow(0 0 6px rgba(230,0,0,0.5));
+    }
+
+    @media(max-width:600px){
+      .social-grid{gap:0.8rem;} .social-card{min-width:130px;padding:1.5rem 1rem;}
+      #topnav{padding:0 0.8rem;} #nav-logo-btn span{display:none;}
+      .nav-sprite-btn img{height:32px;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ AUDIOS ══ -->
+<audio id="bg-music" loop preload="auto"><source src="bg.mp3" type="audio/mpeg"></audio>
+<audio id="snd-muerte" preload="auto"><source src="muertebadnik.mp3" type="audio/mpeg"></audio>
+<audio id="snd-hue" preload="auto"><source src="hue.mp3" type="audio/mpeg"></audio>
+<audio id="snd-dead" preload="auto"><source src="sonicdeadorlive.mp3" type="audio/mpeg"></audio>
+<audio id="eg1" preload="auto"><source src="eggman1.mp3" type="audio/mpeg"></audio>
+<audio id="eg2" preload="auto"><source src="eggman2.mp3" type="audio/mpeg"></audio>
+<audio id="eg3" preload="auto"><source src="eggman3.mp3" type="audio/mpeg"></audio>
+<audio id="eg4" preload="auto"><source src="eggman4.mp3" type="audio/mpeg"></audio>
+<audio id="eg5" preload="auto"><source src="eggman5.mp3" type="audio/mpeg"></audio>
+
+<!-- ══ INTRO ══ -->
+<div id="intro-screen" onclick="enterSite()">
+  <img class="intro-logo" src="logo.png" alt="Imperio Eggman"/>
+  <div class="intro-title">IMPERIO EGGMAN</div>
+  <div class="intro-sub">[ Haz clic para entrar ]</div>
+</div>
+
+<!-- ══ NAV ══ -->
+<nav id="topnav">
+  <div id="nav-left">
+    <button id="nav-logo-btn" onclick="scrollToTop()">
+      <img src="logo.png" alt="Logo"/>
+      <span>Imperio Eggman</span>
+    </button>
+    <!-- Metal Sonic -->
+    <button id="ms-btn" class="nav-sprite-btn" onclick="playMetalSonic()">
+      <img src="metal-sonic.gif" alt="Metal Sonic"/>
+      <div class="sp-tip" id="ms-tip">¡Presiona a Metal Sonic!</div>
+    </button>
+    <!-- Eggman gif -->
+    <button id="eggman-nav-btn" class="nav-sprite-btn" onclick="playEggman()">
+      <img src="eggman.gif" alt="Eggman"/>
+      <div class="sp-tip" id="eg-tip">¡Presiona al Doctor!</div>
+    </button>
+  </div>
+
+  <div id="nav-menu-wrap">
+    <button id="nav-toggle" onclick="toggleNav()">&#9776; MENU</button>
+    <div id="nav-dropdown">
+      <a href="#sobre" onclick="closeNav()">
+        <img class="nav-icon-img" src="orbot.png" alt="Orbot"/> Sobre Nosotros
+      </a>
+      <a href="#badnik" onclick="closeNav()">
+        <img class="nav-icon-img" src="cubot.png" alt="Cubot"/> Únete al Imperio
+      </a>
+      <a href="#minecraft" onclick="closeNav()">
+        <img class="nav-icon-img" src="metal-sonic2.gif" alt="Metal Sonic 2" style="image-rendering:pixelated;"/> Servidor Minecraft
+      </a>
+      <a href="#redes" onclick="closeNav()">
+        <img class="nav-icon-img" src="eggman-saxophone.gif" alt="Eggman Saxo"/> Redes Sociales
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div class="status-bar">
+  <span>&#9654; 🔥 BIENVENIDO AL IMPERIO EGGMAN &#9664; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SISTEMA OPERATIVO: EGG-NET v9.9.9 &nbsp;&nbsp;&nbsp; BADNIKS ACTIVOS: 999+ &nbsp;&nbsp;&nbsp; BLAZE DEJA LAS MULTICUENTAS &nbsp;&nbsp;&nbsp;    CUBOT CRUZIFICADO CORRECTAMENTE &nbsp;&nbsp;&nbsp; SONIC: NEUTRALIZADO (pronto&#8482;) &nbsp;&nbsp;&nbsp; DESCANZA EN PAZ PACO EL DINOSAURIO &nbsp;&nbsp;&nbsp; FOCUSEN A LA AMY🔥 &nbsp;&nbsp;&nbsp; MUCHACHO ME FALTA PA LA COCACOLA &nbsp;&nbsp;&nbsp; NERFEN A SHADOW &nbsp;&nbsp;&nbsp; DEJEN DE MIGAJEAR MUCHACHO &nbsp;&nbsp;&nbsp; EL DR. EGGMAN CONQUISTARA EL MUNDO 🔥 &nbsp;&nbsp;&nbsp;</span>
+</div>
+
+<button id="music-btn" onclick="toggleMusic()">&#9654; MUSICA</button>
+<div id="vol-wrap">
+  <label>VOL</label>
+  <input id="vol-slider" type="range" min="0" max="1" step="0.01" value="0.6" oninput="setVolume(this.value)">
+</div>
+
+<div class="corner-tl"></div>
+<div class="corner-br"></div>
+
+<!-- ══ HERO ══ -->
+<header>
+  <div class="gear-ring"></div>
+  <div class="gear-ring"></div>
+  <div class="gear-ring"></div>
+  <div class="logo-wrap">
+    <div class="badge">&#9632; Sitio Oficial &#9632;</div>
+    <img class="hero-logo" src="logo.png" alt="Eggman Logo"/>
+    <h1><span>Imperio</span>Eggman</h1>
+    <p class="tagline">« El futuro es robótico. El futuro soy yo. »</p>
+  </div>
+  <div class="scroll-hint">&#9660; DESPLAZA PARA UNIRTE &#9660;</div>
+</header>
+
+<!-- ══ SOBRE NOSOTROS ══ -->
+<section id="sobre">
+  <div class="section-wrap">
+    <div class="divider"><span class="divider-icon">&#9632;</span></div>
+    <p class="section-label">// archivo_001 — Sobre nosotros</p>
+    <h2>¿Qué es el Imperio Eggman?</h2>
+    <div class="desc-card">
+      <p>
+        Bienvenido, ciudadano. Estás en la <strong>página oficial del Imperio Eggman</strong>, el reino tecnológico más avanzado, más poderoso y más glorioso que el mundo jamás ha conocido.<br/><br/>
+        Fundado por el genio supremo <strong>Dr. "Eggman" Robotnik</strong>, este imperio representa el pináculo de la ingeniería, la robótica y la dominación global.<br/><br/>
+        Aquí encontrarás las últimas noticias del Imperio, recursos para futuros Badniks, y el canal oficial donde el <strong>Doctor comparte su visión de un mundo mecanizado, perfecto y bajo su mandato eterno</strong>. Porque si el futuro va a ser robótico, debería llevar nuestra marca.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ ÚNETE ══ -->
+<section id="badnik" style="text-align:center;">
+  <div class="section-wrap">
+    <div class="divider"><span class="divider-icon">&#9632;</span></div>
+    <div class="badnik-card">
+      <p class="section-label">// archivo_002 — Reclutamiento</p>
+      <h2>Mas Eggman que nunca,<br/>¿Qué esperas para ser un Badnik?</h2>
+      <p>El Imperio necesita soldados leales, eficientes y a prueba de Sonic. Únete a las filas del ejército mecanizado más temido del planeta. Tu transformación te espera.</p>
+      <a class="cta-btn" href="https://discord.gg/63zfHZ9jS" target="_blank" rel="noopener">UNIRSE AL IMPERIO</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ MINECRAFT ══ -->
+<section id="minecraft">
+  <div class="section-wrap">
+    <div class="divider"><span class="divider-icon">&#9632;</span></div>
+    <div class="mc-card">
+      <div class="mc-inner">
+        <div class="mc-top">
+          <div class="mc-badge">Servidor en Mantenimiento</div>
+          <p class="section-label">// archivo_003 — Eggmanland</p>
+          <h2>Nuestro Servidor de Minecraft</h2>
+        </div>
+        <div class="mc-img-wrap">
+          <img src="eggmanland.png" alt="Eggmanland Minecraft Server"/>
+        </div>
+        <p class="mc-desc">
+          El Imperio ha expandido su dominio al mundo cúbico. <strong>Eggmanland</strong> es el servidor oficial de Minecraft del Imperio Eggman, donde la tecnología y la conquista no tienen límites.<br/><br/>
+          Construye, lucha y domina junto a los mejores Badniks del servidor. ¿Tienes lo que se necesita para sobrevivir en territorio del <strong>Dr. Robotnik</strong>?<br/><br/>
+          <span class="green">&#9632; Únete a nuestro Discord para obtener la IP del servidor.</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ REDES ══ -->
+<section id="redes">
+  <div class="section-wrap">
+    <div class="divider"><span class="divider-icon">&#9632;</span></div>
+    <div class="social-section-inner">
+      <p class="section-label">// archivo_004 — Transmisiones</p>
+      <h2>Síguenos en nuestras redes</h2>
+      <p class="sub">Mantente al tanto de las conquistas del Imperio en todas las plataformas.</p>
+      <div class="social-grid">
+        <a class="social-card discord" href="https://discord.gg/63zfHZ9jS" target="_blank" rel="noopener">
+          <div class="social-icon">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.012.043.028.055a19.9 19.9 0 0 0 5.993 3.03.077.077 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+          </div>
+          <span class="social-name">Discord</span>
+          <span class="social-handle">Servidor Oficial</span>
+        </a>
+        <a class="social-card youtube" href="https://youtube.com/@eggmanmaseggman?si=hbAhSSTjxgfA8dSa" target="_blank" rel="noopener">
+          <div class="social-icon">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          </div>
+          <span class="social-name">YouTube</span>
+          <span class="social-handle">@eggmanmaseggman</span>
+        </a>
+        <a class="social-card tiktok" href="https://www.tiktok.com/@ourcome.randoms?_r=1&_t=ZS-95pGW3AnQzk" target="_blank" rel="noopener">
+          <div class="social-icon">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="#ffffff"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.76a4.85 4.85 0 01-1.01-.07z"/></svg>
+          </div>
+          <span class="social-name">TikTok</span>
+          <span class="social-handle">@ourcome.randoms</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <!-- Badnik parade -->
+  <div class="parade-wrap">
+    <div class="parade-inner">
+      <!-- duplicado para loop infinito -->
+      <img src="motobug.gif" alt="Motobug"/>
+      <img src="crab.gif" alt="Crab"/>
+      <img src="motobug.gif" alt="Motobug"/>
+      <img src="crab.gif" alt="Crab"/>
+      <img src="motobug.gif" alt="Motobug"/>
+      <img src="crab.gif" alt="Crab"/>
+      <img src="motobug.gif" alt="Motobug"/>
+      <img src="crab.gif" alt="Crab"/>
+      <img src="motobug.gif" alt="Motobug"/>
+      <img src="crab.gif" alt="Crab"/>
+      <img src="motobug.gif" alt="Motobug"/>
+      <img src="crab.gif" alt="Crab"/>
+    </div>
+  </div>
+  <img class="foot-logo" src="logo.png" alt=""/>
+  <p>© <strong>IMPERIO EGGMAN</strong> — Todos los mundos reservados. Sonic no está invitado.</p>
+  <br/>
+  <p style="font-size:0.6rem;opacity:0.3">EGG-NET SYSTEM v9.9.9 · DOMINIO MUNDIAL EN PROGRESO&#8482;</p>
+</footer>
+
+<script>
+// ══ AUDIO ENGINE ══
+const bgMusic   = document.getElementById('bg-music');
+const sndMuerte = document.getElementById('snd-muerte');
+const sndHue    = document.getElementById('snd-hue');
+const sndDead   = document.getElementById('snd-dead');
+const eggSnds   = [
+  document.getElementById('eg1'),
+  document.getElementById('eg2'),
+  document.getElementById('eg3'),
+  document.getElementById('eg4'),
+  document.getElementById('eg5'),
+];
+bgMusic.volume = 0.6;
+
+let siteEntered = false;
+let musicOn     = true;
+let sfxCtx      = null;
+let msLocked    = false;
+let egLocked    = false;
+
+function getSfxCtx() {
+  if (!sfxCtx) sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return sfxCtx;
+}
+
+// ── SFX sintéticos ──
+function playHover() {
+  const ac = getSfxCtx(), t = ac.currentTime;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(880,t); o.frequency.linearRampToValueAtTime(1200,t+0.04);
+  g.gain.setValueAtTime(0.07,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.07);
+  o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+0.08);
+}
+
+function playClick() {
+  const ac = getSfxCtx(), t = ac.currentTime;
+  [880,1320].forEach((f,i) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type='square'; o.frequency.value=f;
+    const st=t+i*0.06;
+    g.gain.setValueAtTime(0,st); g.gain.linearRampToValueAtTime(0.09,st+0.01); g.gain.linearRampToValueAtTime(0,st+0.055);
+    o.connect(g); g.connect(ac.destination); o.start(st); o.stop(st+0.07);
+  });
+  const o2=ac.createOscillator(), g2=ac.createGain();
+  o2.type='triangle'; o2.frequency.setValueAtTime(200,t); o2.frequency.exponentialRampToValueAtTime(60,t+0.1);
+  g2.gain.setValueAtTime(0.15,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+  o2.connect(g2); g2.connect(ac.destination); o2.start(t); o2.stop(t+0.14);
+}
+
+// ── METAL SONIC — aleatorio entre hue y dead ──
+function playMetalSonic() {
+  if (!siteEntered || msLocked) return;
+  msLocked = true;
+  const btn = document.getElementById('ms-btn');
+  btn.classList.add('locked');
+  document.getElementById('ms-tip').textContent = '...';
+
+  const clip = Math.random() < 0.5 ? sndHue : sndDead;
+  clip.currentTime = 0; clip.volume = 1; clip.play();
+  clip.onended = () => {
+    msLocked = false;
+    btn.classList.remove('locked');
+    document.getElementById('ms-tip').textContent = '¡Presiona a Metal Sonic!';
+    clip.onended = null;
+  };
+}
+
+// ── EGGMAN NAV — aleatorio entre eggman1-5 ──
+function playEggman() {
+  if (!siteEntered || egLocked) return;
+  egLocked = true;
+  const btn = document.getElementById('eggman-nav-btn');
+  btn.classList.add('locked');
+  document.getElementById('eg-tip').textContent = '...';
+
+  const idx = Math.floor(Math.random() * eggSnds.length);
+  const clip = eggSnds[idx];
+  // stop any other eggman sound playing
+  eggSnds.forEach(s => { s.pause(); s.currentTime=0; });
+  clip.currentTime = 0; clip.volume = 1; clip.play();
+  clip.onended = () => {
+    egLocked = false;
+    btn.classList.remove('locked');
+    document.getElementById('eg-tip').textContent = '¡Presiona al Doctor!';
+    clip.onended = null;
+  };
+}
+
+// ── MÚSICA ──
+function startMusic() {
+  bgMusic.currentTime=0; bgMusic.play().catch(()=>{});
+  musicOn=true; updateMusicBtn();
+}
+function toggleMusic() {
+  if (musicOn){bgMusic.pause();musicOn=false;}
+  else{bgMusic.play();musicOn=true;}
+  updateMusicBtn(); playClick();
+}
+function setVolume(v) { bgMusic.volume=parseFloat(v); }
+function updateMusicBtn() {
+  const btn=document.getElementById('music-btn');
+  btn.textContent=musicOn?'⏸ MUSICA':'▶ MUSICA';
+  musicOn?btn.classList.add('playing'):btn.classList.remove('playing');
+}
+
+// ── ENTRAR AL SITIO ──
+function enterSite() {
+  if (siteEntered) return;
+  siteEntered=true;
+  sndMuerte.currentTime=0; sndMuerte.volume=1; sndMuerte.play().catch(()=>{});
+  const intro=document.getElementById('intro-screen');
+  intro.style.opacity='0';
+  setTimeout(()=>{
+    intro.style.display='none';
+    document.getElementById('music-btn').style.display='block';
+    document.getElementById('vol-wrap').style.display='flex';
+    document.querySelectorAll('.nav-sprite-btn').forEach(b=>b.style.display='inline-flex');
+    updateMusicBtn();
+  },900);
+  setTimeout(()=>startMusic(),1200);
+}
+
+// ── NAV ──
+function toggleNav() { document.getElementById('nav-dropdown').classList.toggle('open'); if(siteEntered)playClick(); }
+function closeNav()  { document.getElementById('nav-dropdown').classList.remove('open'); if(siteEntered)playClick(); }
+function scrollToTop(){ window.scrollTo({top:0,behavior:'smooth'}); if(siteEntered)playClick(); }
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#nav-menu-wrap')) document.getElementById('nav-dropdown').classList.remove('open');
+});
+
+// ── HOVER & CLICK SFX ──
+document.addEventListener('DOMContentLoaded',()=>{
+  let lastHover=0;
+  document.querySelectorAll('a,button,.cta-btn').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{
+      if(!siteEntered)return;
+      const now=Date.now(); if(now-lastHover>100){playHover();lastHover=now;}
+    });
+    el.addEventListener('click',()=>{if(siteEntered)playClick();});
+  });
+  document.addEventListener('click',e=>{
+    if(!siteEntered)return;
+    if(!e.target.closest('a,button,.cta-btn'))playClick();
+  });
+});
+</script>
+</body>
+</html>
