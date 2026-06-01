@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Imperio Eggman — Sitio Oficial</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --red:#e60000;
+  --red-dark:#9a0000;
+  --red-glow:rgba(230,0,0,0.6);
+  --yellow:#ffd000;
+  --yellow-glow:rgba(255,208,0,0.4);
+  --dark:#050505;
+  --dark2:#0d0000;
+  --chrome:#c8c8c8;
+  --chrome-dim:#777;
+  --green:#4dff4d;
+  --panel-bg:rgba(8,0,0,0.92);
+  --border:rgba(230,0,0,0.25);
+  --border-bright:rgba(230,0,0,0.7);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:#03000a;
+  color:var(--chrome);
+  font-family:'Share Tech Mono',monospace;
+  overflow-x:hidden;
+  cursor:crosshair;
+}
+
+/* Global starfield canvas fixed behind everything */
+#starfield-canvas{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 0%, #12001a 0%, #06000f 40%, #02000a 100%);
+}
+
+/* Scanlines overlay */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0,0,0,0.06) 2px,
+    rgba(0,0,0,0.06) 4px
+  );
+  pointer-events:none;
+  z-index:998;
+}
+
+/* Vignette */
+body::after{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.6) 100%);
+  pointer-events:none;
+  z-index:997;
+}
+
+/* INTRO */
+#intro-screen{
+  position:fixed;inset:0;
+  background:radial-gradient(ellipse at center, #1a0000 0%, #000 70%);
+  z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2rem;
+  cursor:pointer;
+  transition:opacity 1s ease;
+}
+#intro-screen::before{
+  content:'';
+  position:absolute;inset:0;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 48px, rgba(230,0,0,0.04) 48px, rgba(230,0,0,0.04) 50px),
+    repeating-linear-gradient(90deg, transparent, transparent 48px, rgba(230,0,0,0.04) 48px, rgba(230,0,0,0.04) 50px);
+}
+#intro-screen .intro-logo{
+  width:clamp(130px,22vw,210px);
+  animation:bob 2s ease-in-out infinite;
+  filter:drop-shadow(0 0 40px rgba(230,0,0,0.9)) drop-shadow(0 0 80px rgba(230,0,0,0.4));
+}
+#intro-screen .intro-title{
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(2rem,5.5vw,4rem);
+  font-weight:900;
+  color:var(--yellow);
+  text-shadow:0 0 40px rgba(255,208,0,0.6),0 0 80px rgba(255,208,0,0.2),5px 5px 0 var(--red),10px 10px 0 #5a0000;
+  text-align:center;
+  letter-spacing:0.08em;
+  animation:flicker 3s ease-in-out infinite;
+}
+#intro-screen .intro-sub{
+  font-size:0.75rem;
+  color:var(--red);
+  letter-spacing:0.4em;
+  text-transform:uppercase;
+  animation:blink 1.2s step-end infinite;
+}
+#intro-screen .intro-line{
+  width:200px;height:1px;
+  background:linear-gradient(to right,transparent,var(--red),transparent);
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* NAV */
+#topnav{
+  position:fixed;top:0;left:0;right:0;height:58px;
+  background:rgba(3,0,12,0.92);
+  border-bottom:1px solid var(--red);
+  box-shadow:0 0 30px rgba(230,0,0,0.25), inset 0 -1px 0 rgba(230,0,0,0.5);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 1.5rem;z-index:700;
+  backdrop-filter:blur(14px);
+}
+#nav-left{display:flex;align-items:center;gap:0.8rem;}
+#nav-logo-btn{
+  background:none;border:none;cursor:pointer;padding:0;
+  display:flex;align-items:center;gap:0.7rem;
+}
+#nav-logo-btn img{
+  width:36px;height:36px;object-fit:contain;
+  filter:drop-shadow(0 0 8px rgba(230,0,0,0.8));
+  transition:transform 0.25s,filter 0.25s;
+}
+#nav-logo-btn:hover img{transform:scale(1.18) rotate(-6deg);filter:drop-shadow(0 0 18px rgba(230,0,0,1));}
+#nav-logo-btn span{
+  font-family:'Orbitron',sans-serif;
+  font-size:0.65rem;font-weight:700;
+  color:var(--yellow);letter-spacing:0.18em;text-transform:uppercase;
+  text-shadow:0 0 12px rgba(255,208,0,0.4);
+}
+.nav-sprite-btn{
+  background:none;border:none;cursor:pointer;padding:0;
+  display:none;position:relative;line-height:0;
+}
+.nav-sprite-btn img{
+  height:40px;width:auto;image-rendering:pixelated;
+  transition:transform 0.15s;
+  filter:drop-shadow(0 0 5px rgba(80,120,255,0.5));
+}
+.nav-sprite-btn:hover:not(.locked) img{transform:scale(1.2);}
+.nav-sprite-btn.locked{cursor:not-allowed;}
+.nav-sprite-btn.locked img{filter:grayscale(0.6) drop-shadow(0 0 4px rgba(255,0,0,0.5));}
+.nav-sprite-btn .sp-tip{
+  position:absolute;top:115%;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,0.95);border:1px solid var(--red);
+  color:var(--chrome);font-family:'Orbitron',sans-serif;
+  font-size:0.42rem;letter-spacing:0.1em;padding:0.25rem 0.6rem;
+  white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.2s;
+}
+.nav-sprite-btn:hover .sp-tip{opacity:1;}
+#eggman-nav-btn img{filter:drop-shadow(0 0 6px rgba(230,0,0,0.7));}
+#eggman-nav-btn.locked img{filter:grayscale(0.6) drop-shadow(0 0 4px rgba(255,0,0,0.5));}
+#nav-right{display:flex;align-items:center;gap:0.8rem;}
+#nav-menu-wrap{position:relative;}
+#nav-toggle{
+  background:none;
+  border:1px solid rgba(230,0,0,0.5);
+  color:var(--chrome);
+  font-family:'Orbitron',sans-serif;
+  font-size:0.58rem;letter-spacing:0.18em;
+  padding:0.45rem 0.9rem;cursor:pointer;
+  text-transform:uppercase;transition:all 0.2s;
+}
+#nav-toggle:hover{background:var(--red);color:#fff;border-color:var(--red);box-shadow:0 0 16px rgba(230,0,0,0.4);}
+#nav-dropdown{
+  position:absolute;top:calc(100% + 12px);right:0;
+  background:rgba(3,0,0,0.98);
+  border:1px solid var(--red);
+  border-top:3px solid var(--red);
+  box-shadow:0 20px 60px rgba(0,0,0,0.8),0 0 30px rgba(230,0,0,0.15);
+  min-width:260px;display:none;flex-direction:column;overflow:hidden;
+}
+#nav-dropdown.open{display:flex;}
+#nav-dropdown a{
+  display:flex;align-items:center;gap:0.9rem;
+  padding:0.9rem 1.3rem;
+  text-decoration:none;color:var(--chrome);
+  font-family:'Orbitron',sans-serif;font-size:0.62rem;
+  letter-spacing:0.14em;text-transform:uppercase;
+  border-bottom:1px solid rgba(230,0,0,0.1);
+  transition:all 0.18s;
+}
+#nav-dropdown a:last-child{border-bottom:none;}
+#nav-dropdown a:hover{background:rgba(230,0,0,0.12);color:var(--yellow);padding-left:1.8rem;border-left:3px solid var(--red);}
+.nav-icon-img{width:22px;height:22px;object-fit:contain;image-rendering:pixelated;flex-shrink:0;}
+
+/* USER BTN in nav */
+#user-nav-btn{
+  background:none;border:1px solid rgba(230,0,0,0.4);cursor:pointer;
+  padding:0.3rem 0.6rem;display:flex;align-items:center;gap:0.4rem;
+  color:var(--chrome);font-family:'Orbitron',sans-serif;
+  font-size:0.55rem;letter-spacing:0.1em;transition:all 0.2s;display:none;
+}
+#user-nav-btn:hover{border-color:var(--yellow);color:var(--yellow);}
+#user-avatar{width:26px;height:26px;border-radius:50%;border:1px solid var(--red);object-fit:cover;}
+
+/* STATUS BAR */
+.status-bar{
+  position:fixed;top:58px;left:0;right:0;
+  background:linear-gradient(90deg,var(--red-dark),var(--red),var(--red-dark));
+  color:#fff;font-size:0.58rem;letter-spacing:0.2em;
+  padding:0.3rem 1rem;text-align:center;z-index:500;overflow:hidden;
+  border-bottom:1px solid rgba(255,150,0,0.3);
+  box-shadow:0 2px 20px rgba(230,0,0,0.3);
+}
+.status-bar span{display:inline-block;animation:marquee 32s linear infinite;white-space:nowrap;}
+@keyframes marquee{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
+
+/* MUSIC */
+#music-btn{
+  position:fixed;bottom:1.5rem;left:1.5rem;
+  background:rgba(2,0,0,0.9);
+  border:1px solid rgba(230,0,0,0.5);
+  color:var(--chrome);font-family:'Orbitron',sans-serif;
+  font-size:0.52rem;letter-spacing:0.18em;
+  padding:0.6rem 1.1rem;cursor:pointer;z-index:600;
+  transition:all 0.2s;text-transform:uppercase;display:none;
+  box-shadow:0 4px 20px rgba(0,0,0,0.5);
+}
+#music-btn:hover{background:var(--red);color:#fff;box-shadow:0 4px 24px rgba(230,0,0,0.4);}
+#music-btn.playing{border-color:var(--yellow);color:var(--yellow);}
+#vol-wrap{position:fixed;bottom:1.5rem;left:9.5rem;display:none;align-items:center;gap:0.5rem;z-index:600;}
+#vol-wrap label{font-family:'Orbitron',sans-serif;font-size:0.48rem;color:#555;letter-spacing:0.1em;}
+#vol-slider{-webkit-appearance:none;width:80px;height:2px;background:#2a0000;outline:none;}
+#vol-slider::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;background:var(--red);cursor:pointer;border-radius:0;}
+
+/* CORNERS */
+.corner-tl,.corner-br{position:fixed;width:70px;height:70px;pointer-events:none;z-index:100;}
+.corner-tl{top:1rem;left:1rem;border-top:2px solid rgba(230,0,0,0.5);border-left:2px solid rgba(230,0,0,0.5);}
+.corner-tl::after{content:'';position:absolute;top:8px;left:8px;width:10px;height:10px;border-top:1px solid rgba(230,0,0,0.3);border-left:1px solid rgba(230,0,0,0.3);}
+.corner-br{bottom:1rem;right:1rem;border-bottom:2px solid rgba(230,0,0,0.5);border-right:2px solid rgba(230,0,0,0.5);}
+.corner-br::after{content:'';position:absolute;bottom:8px;right:8px;width:10px;height:10px;border-bottom:1px solid rgba(230,0,0,0.3);border-right:1px solid rgba(230,0,0,0.3);}
+
+/* ORBOT BUBBLE */
+#orbot-bubble{
+  position:fixed;bottom:6rem;right:1.5rem;z-index:650;
+  display:none;flex-direction:column;align-items:flex-end;gap:0.5rem;cursor:pointer;
+}
+#orbot-bubble img{
+  width:60px;height:60px;object-fit:contain;image-rendering:pixelated;
+  animation:bob 2s ease-in-out infinite;
+  filter:drop-shadow(0 0 10px rgba(230,0,0,0.7));
+}
+#orbot-msg{
+  background:rgba(2,0,0,0.96);
+  border:1px solid var(--red);
+  box-shadow:0 4px 20px rgba(230,0,0,0.2);
+  padding:0.6rem 1rem;
+  font-size:0.6rem;max-width:210px;
+  text-align:right;line-height:1.6;
+  color:var(--chrome);position:relative;
+}
+#orbot-msg::after{
+  content:'';position:absolute;bottom:-7px;right:18px;
+  border-left:7px solid transparent;border-right:7px solid transparent;
+  border-top:7px solid var(--red);
+}
+
+/* HERO */
+header{
+  position:relative;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;
+  padding-top:95px;padding-left:2rem;padding-right:2rem;
+  background:transparent;
+  text-align:center;overflow:hidden;
+}
+
+/* Particle canvas behind everything */
+#hero-canvas{
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+}
+
+/* Deep radial glow — nebula-like */
+header::after{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 55% 45% at 50% 45%, rgba(200,0,0,0.28) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 35% at 50% 100%, rgba(120,0,80,0.2) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 80% 20%, rgba(80,0,180,0.08) 0%, transparent 60%);
+  pointer-events:none;z-index:1;
+}
+
+/* Animated grid bg */
+header::before{
+  content:'';position:absolute;inset:0;z-index:1;
+  background-image:
+    linear-gradient(rgba(230,0,0,0.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(230,0,0,0.05) 1px,transparent 1px);
+  background-size:60px 60px;
+  animation:gridmove 25s linear infinite;
+}
+@keyframes gridmove{from{background-position:0 0}to{background-position:60px 60px}}
+
+.gear-ring{
+  position:absolute;border-radius:50%;
+  border:1px dashed rgba(230,0,0,0.12);
+  animation:spin linear infinite;z-index:2;
+}
+.gear-ring:nth-child(1){width:600px;height:600px;top:50%;left:50%;transform:translate(-50%,-50%);animation-duration:40s;border-width:2px;}
+.gear-ring:nth-child(2){width:850px;height:850px;top:50%;left:50%;transform:translate(-50%,-50%);animation-duration:65s;animation-direction:reverse;border-color:rgba(255,208,0,0.05);}
+.gear-ring:nth-child(3){width:380px;height:380px;top:50%;left:50%;transform:translate(-50%,-50%);animation-duration:22s;border-color:rgba(230,0,0,0.09);border-style:solid;}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg);}}
+
+/* Energy burst lines */
+.energy-line{
+  position:absolute;top:50%;left:50%;
+  width:1px;background:linear-gradient(to top,transparent,rgba(230,0,0,0.6),transparent);
+  transform-origin:bottom center;pointer-events:none;z-index:1;
+  animation:energy-pulse 3s ease-in-out infinite;
+}
+@keyframes energy-pulse{0%,100%{opacity:0;transform:scaleY(0.4)}50%{opacity:1;transform:scaleY(1)}}
+
+.logo-wrap{
+  position:relative;z-index:3;margin-bottom:1.2rem;
+  display:flex;flex-direction:column;align-items:center;
+  /* cinematic entrance */
+  animation:logo-enter 1.2s cubic-bezier(0.16,1,0.3,1) both;
+  animation-delay:0.3s;
+}
+@keyframes logo-enter{
+  from{opacity:0;transform:scale(0.4) translateY(60px);filter:blur(20px);}
+  to{opacity:1;transform:scale(1) translateY(0);filter:blur(0);}
+}
+
+.hero-logo{
+  width:clamp(160px,28vw,260px);
+  animation:bob 3s ease-in-out infinite, logo-shockwave 1.4s cubic-bezier(0.16,1,0.3,1) both;
+  animation-delay:0s, 0.5s;
+  filter:drop-shadow(0 0 40px rgba(230,0,0,0.9)) drop-shadow(0 0 100px rgba(230,0,0,0.4)) drop-shadow(0 0 6px rgba(255,200,0,0.3));
+  margin-bottom:1.8rem;display:block;
+}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
+@keyframes logo-shockwave{
+  0%{filter:drop-shadow(0 0 0px #fff) drop-shadow(0 0 0 rgba(230,0,0,0));}
+  30%{filter:drop-shadow(0 0 80px #fff) drop-shadow(0 0 160px rgba(230,0,0,1));}
+  100%{filter:drop-shadow(0 0 40px rgba(230,0,0,0.9)) drop-shadow(0 0 100px rgba(230,0,0,0.4));}
+}
+
+.badge{
+  display:inline-flex;align-items:center;gap:0.6rem;
+  background:linear-gradient(135deg,var(--red-dark),var(--red));
+  color:#fff;font-family:'Orbitron',sans-serif;
+  font-size:0.6rem;letter-spacing:0.25em;text-transform:uppercase;
+  padding:0.35rem 1.2rem;
+  clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);
+  margin-bottom:1.8rem;
+  box-shadow:0 0 20px rgba(230,0,0,0.4);
+  animation:pulse-badge 2.5s ease-in-out infinite, badge-enter 1s ease both;
+  animation-delay:0s, 0.8s;
+}
+.badge::before,.badge::after{content:'■';font-size:0.5rem;opacity:0.7;}
+@keyframes pulse-badge{0%,100%{box-shadow:0 0 20px rgba(230,0,0,0.4)}50%{box-shadow:0 0 40px rgba(230,0,0,0.7)}}
+@keyframes badge-enter{from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}
+
+h1{
+  font-family:'Orbitron',sans-serif;font-weight:900;
+  font-size:clamp(3.2rem,10vw,7.5rem);
+  line-height:1;text-transform:uppercase;letter-spacing:0.04em;
+  color:var(--yellow);
+  text-shadow:
+    0 0 40px rgba(255,208,0,0.8),
+    0 0 100px rgba(255,208,0,0.3),
+    4px 4px 0 var(--red),
+    8px 8px 0 #7a0000,
+    14px 14px 0 rgba(100,0,0,0.3);
+  animation:flicker 7s ease-in-out infinite, h1-enter 1s cubic-bezier(0.16,1,0.3,1) both;
+  animation-delay:0s, 0.9s;
+}
+@keyframes flicker{0%,94%,100%{opacity:1}95%{opacity:0.7;text-shadow:0 0 10px rgba(255,208,0,0.3)}96%{opacity:1}98%{opacity:0.85}}
+@keyframes h1-enter{
+  from{opacity:0;transform:translateY(40px) skewX(-5deg);letter-spacing:0.3em;}
+  to{opacity:1;transform:translateY(0) skewX(0);letter-spacing:0.04em;}
+}
+h1 span{
+  display:block;font-size:0.38em;
+  color:var(--red);letter-spacing:0.35em;
+  text-shadow:0 0 20px rgba(230,0,0,1);
+  margin-bottom:0.15em;
+  animation:span-glitch 8s ease-in-out infinite;
+}
+@keyframes span-glitch{
+  0%,90%,100%{text-shadow:0 0 20px rgba(230,0,0,1);transform:none;}
+  91%{transform:translateX(-4px);text-shadow:4px 0 #ff0,−4px 0 #0ff;}
+  92%{transform:translateX(4px);text-shadow:-4px 0 #ff0,4px 0 #0ff;}
+  93%{transform:none;text-shadow:0 0 20px rgba(230,0,0,1);}
+}
+
+/* HERO CTA BUTTONS */
+.hero-cta-wrap{
+  display:flex;flex-wrap:wrap;gap:1.2rem;justify-content:center;
+  margin-top:2.8rem;z-index:3;position:relative;
+  animation:cta-enter 1s cubic-bezier(0.16,1,0.3,1) both;
+  animation-delay:1.3s;
+}
+@keyframes cta-enter{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+
+.hero-cta-primary{
+  display:inline-flex;align-items:center;gap:0.9rem;
+  background:linear-gradient(135deg,#c00000,var(--red),#ff2200);
+  color:#fff;font-family:'Orbitron',sans-serif;
+  font-weight:900;font-size:1rem;
+  letter-spacing:0.2em;text-transform:uppercase;
+  text-decoration:none;
+  padding:1.3rem 3.5rem;
+  clip-path:polygon(16px 0%,100% 0%,calc(100% - 16px) 100%,0% 100%);
+  border:none;cursor:pointer;
+  transition:all 0.25s;
+  box-shadow:0 0 40px rgba(230,0,0,0.7),0 0 80px rgba(230,0,0,0.3),0 0 120px rgba(230,0,0,0.1);
+  position:relative;overflow:hidden;
+  animation:cta-pulse 2s ease-in-out infinite;
+}
+@keyframes cta-pulse{
+  0%,100%{box-shadow:0 0 40px rgba(230,0,0,0.7),0 0 80px rgba(230,0,0,0.3);}
+  50%{box-shadow:0 0 60px rgba(230,0,0,0.9),0 0 120px rgba(230,0,0,0.5),0 0 20px rgba(255,208,0,0.2);}
+}
+.hero-cta-primary::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
+  transform:translateX(-100%);transition:transform 0.5s;
+}
+.hero-cta-primary:hover::before{transform:translateX(100%);}
+.hero-cta-primary:hover{
+  background:linear-gradient(135deg,var(--yellow),#ff8c00);
+  color:#000;
+  box-shadow:0 0 60px rgba(255,208,0,0.9),0 0 120px rgba(255,208,0,0.4);
+  transform:translateY(-4px) scale(1.03);
+}
+
+.hero-cta-secondary{
+  display:inline-flex;align-items:center;gap:0.9rem;
+  background:transparent;
+  color:var(--chrome);font-family:'Orbitron',sans-serif;
+  font-weight:700;font-size:0.9rem;
+  letter-spacing:0.2em;text-transform:uppercase;
+  text-decoration:none;
+  padding:1.3rem 3rem;
+  clip-path:polygon(16px 0%,100% 0%,calc(100% - 16px) 100%,0% 100%);
+  border:none;cursor:pointer;
+  transition:all 0.25s;
+  box-shadow:inset 0 0 0 1px rgba(230,0,0,0.5),0 0 20px rgba(230,0,0,0.1);
+  position:relative;
+}
+.hero-cta-secondary:hover{
+  background:rgba(230,0,0,0.1);
+  color:var(--yellow);
+  box-shadow:inset 0 0 0 1px var(--red),0 0 30px rgba(230,0,0,0.3);
+  transform:translateY(-3px);
+}
+
+.tagline{
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(0.7rem,1.8vw,0.95rem);
+  letter-spacing:0.18em;color:#888;
+  margin-top:1.2rem;
+  border-top:1px solid rgba(230,0,0,0.15);
+  padding-top:1rem;
+}
+.scroll-hint{
+  position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);
+  font-size:0.65rem;letter-spacing:0.25em;color:var(--red);opacity:0.5;
+  animation:bounce 2.2s ease-in-out infinite;font-family:'Orbitron',sans-serif;
+}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(10px)}}
+
+/* CATEGORY CARDS */
+.cat-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:1px;
+  max-width:800px;
+  margin:2.8rem auto 0;
+  z-index:3;position:relative;
+  border:1px solid rgba(230,0,0,0.2);
+  background:rgba(230,0,0,0.1);
+}
+.cat-card{
+  background:rgba(3,0,10,0.75);
+  border:none;
+  padding:1.6rem 1rem;
+  text-decoration:none;color:var(--chrome);
+  display:flex;flex-direction:column;align-items:center;gap:0.7rem;
+  transition:all 0.22s;position:relative;overflow:hidden;cursor:pointer;
+}
+.cat-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(230,0,0,0.08),transparent);
+  opacity:0;transition:opacity 0.3s;
+}
+.cat-card:hover::before{opacity:1;}
+.cat-card:hover{background:rgba(30,0,0,0.95);transform:translateY(-3px);box-shadow:0 -2px 0 var(--red) inset,0 8px 30px rgba(230,0,0,0.2);}
+.cat-icon{font-size:1.8rem;line-height:1;filter:drop-shadow(0 0 8px rgba(230,0,0,0.4));}
+.cat-label{font-family:'Orbitron',sans-serif;font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--yellow);}
+.cat-desc{font-size:0.58rem;color:#555;text-align:center;line-height:1.5;}
+
+/* SECTIONS */
+.section-wrap{max-width:960px;margin:0 auto;padding:5.5rem 2rem;}
+.divider{
+  display:flex;align-items:center;gap:1.2rem;margin-bottom:3.5rem;
+}
+.divider::before,.divider::after{
+  content:'';flex:1;height:1px;
+  background:linear-gradient(to right,transparent,rgba(230,0,0,0.5),transparent);
+}
+.divider-icon{font-size:1rem;color:rgba(230,0,0,0.6);}
+.section-label{
+  font-family:'Orbitron',sans-serif;
+  font-size:0.58rem;letter-spacing:0.4em;
+  color:rgba(230,0,0,0.7);text-transform:uppercase;
+  margin-bottom:0.8rem;
+}
+h2{
+  font-family:'Orbitron',sans-serif;font-weight:700;
+  font-size:clamp(1.6rem,4vw,2.6rem);
+  color:var(--yellow);
+  text-shadow:3px 3px 0 rgba(122,0,0,0.6),0 0 30px rgba(255,208,0,0.2);
+  margin-bottom:2rem;
+  letter-spacing:0.03em;
+}
+
+/* SOBRE */
+#sobre{
+  background:linear-gradient(180deg,transparent 0%,rgba(20,0,0,0.55) 50%,transparent 100%);
+  position:relative;z-index:2;
+}
+.desc-card{
+  background:linear-gradient(135deg,rgba(20,0,0,0.7) 0%,rgba(9,9,9,0.6) 60%,rgba(16,12,0,0.7) 100%);
+  border:1px solid rgba(230,0,0,0.2);
+  border-left:4px solid var(--red);
+  padding:3rem 2.5rem;
+  position:relative;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+.desc-card::before{
+  content:'DR.EGGMAN';
+  position:absolute;top:1rem;right:1.5rem;
+  font-family:'Orbitron',sans-serif;font-size:3.5rem;font-weight:900;
+  color:rgba(230,0,0,0.04);pointer-events:none;letter-spacing:0.1em;
+}
+.desc-card::after{
+  content:'';position:absolute;top:0;right:0;
+  width:3px;height:100%;
+  background:linear-gradient(to bottom,transparent,rgba(230,0,0,0.4),transparent);
+}
+.desc-card p{font-size:1.05rem;line-height:2;color:#c0c0c0;}
+.desc-card p strong{color:var(--yellow);}
+
+
+/* BADNIK / ÚNETE */
+#badnik{
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 50%,rgba(120,0,0,0.18),transparent),
+    transparent;
+  text-align:center;
+  position:relative;z-index:2;
+}
+.badnik-card{
+  background:linear-gradient(135deg,rgba(24,0,0,0.75) 0%,rgba(8,8,8,0.65) 40%,rgba(16,5,0,0.75) 100%);
+  border:1px solid rgba(230,0,0,0.3);
+  border-top:3px solid var(--red);
+  padding:4rem 2.5rem;position:relative;overflow:hidden;
+  box-shadow:0 0 80px rgba(230,0,0,0.08);
+}
+.badnik-card::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(
+    45deg,transparent,transparent 30px,
+    rgba(230,0,0,0.02) 30px,rgba(230,0,0,0.02) 31px
+  );
+  pointer-events:none;
+}
+.badnik-card::after{
+  content:'EGG';
+  position:absolute;bottom:-1rem;right:-1rem;
+  font-family:'Orbitron',sans-serif;font-size:8rem;font-weight:900;
+  color:rgba(230,0,0,0.03);pointer-events:none;line-height:1;
+}
+.badnik-card h2{font-size:clamp(1.5rem,4vw,2.4rem);margin-bottom:1.2rem;}
+.badnik-card p{
+  font-size:1rem;line-height:1.9;
+  max-width:600px;margin:0 auto 2.5rem;color:#aaa;
+}
+.cta-btn{
+  display:inline-flex;align-items:center;gap:0.7rem;
+  background:linear-gradient(135deg,#c00000,var(--red));
+  color:#fff;font-family:'Orbitron',sans-serif;
+  font-weight:700;font-size:0.85rem;
+  letter-spacing:0.18em;text-transform:uppercase;
+  text-decoration:none;
+  padding:1.1rem 3rem;
+  clip-path:polygon(14px 0%,100% 0%,calc(100% - 14px) 100%,0% 100%);
+  border:none;cursor:pointer;
+  transition:all 0.25s;
+  box-shadow:0 0 30px rgba(230,0,0,0.5),0 0 60px rgba(230,0,0,0.2);
+  position:relative;z-index:1;
+}
+.cta-btn::before{content:'▶';}
+.cta-btn:hover{
+  background:linear-gradient(135deg,var(--yellow),#ff8c00);
+  color:#000;
+  box-shadow:0 0 50px rgba(255,208,0,0.7),0 0 100px rgba(255,208,0,0.3);
+  transform:translateY(-3px) scale(1.02);
+}
+
+/* MINECRAFT */
+#minecraft{
+  background:linear-gradient(180deg,transparent 0%,rgba(0,10,5,0.45) 50%,transparent 100%);
+  position:relative;z-index:2;
+}
+.mc-card{
+  border:1px solid rgba(230,0,0,0.2);
+  background:linear-gradient(135deg,rgba(9,0,0,0.75) 0%,rgba(4,4,4,0.65) 50%,rgba(0,8,10,0.75) 100%);
+  overflow:hidden;position:relative;
+  box-shadow:0 30px 80px rgba(0,0,0,0.6);
+}
+.mc-card::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(
+    -45deg,transparent,transparent 20px,
+    rgba(0,180,0,0.01) 20px,rgba(0,180,0,0.01) 21px
+  );pointer-events:none;
+}
+.mc-inner{padding:3rem;position:relative;z-index:1;}
+.mc-top{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:2.5rem;}
+.mc-badge{
+  display:inline-flex;align-items:center;gap:0.6rem;
+  background:rgba(255,140,0,0.1);
+  border:1px solid rgba(255,140,0,0.35);
+  color:#4dff4d;font-family:'Orbitron',sans-serif;
+  font-size:0.55rem;letter-spacing:0.25em;text-transform:uppercase;
+  padding:0.35rem 1rem;margin-bottom:1.8rem;
+}
+.mc-badge::before{
+  content:'';width:6px;height:6px;
+  background:#ff8c00;border-radius:50%;
+  animation:pulse-green 1.5s ease-in-out infinite;
+}
+@keyframes pulse-green{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.6)}}
+.mc-img-wrap{
+  width:100%;max-width:700px;margin:0 auto 2.5rem;
+  border:1px solid rgba(230,0,0,0.25);
+  position:relative;overflow:hidden;
+}
+.mc-img-wrap::after{
+  content:'EGGMANLAND';
+  position:absolute;top:0.8rem;left:0.8rem;
+  font-family:'Orbitron',sans-serif;font-size:0.48rem;
+  letter-spacing:0.25em;color:rgba(255,255,255,0.5);
+  background:rgba(0,0,0,0.6);padding:0.25rem 0.6rem;
+}
+.mc-img-wrap img{
+  width:100%;display:block;
+  filter:brightness(0.9) saturate(1.1);
+  transition:transform 0.5s,filter 0.5s;
+}
+.mc-img-wrap:hover img{transform:scale(1.04);filter:brightness(1.05) saturate(1.3);}
+.mc-desc{font-size:1rem;line-height:2;color:#bbb;max-width:650px;margin:0 auto;}
+.mc-desc strong{color:var(--yellow);}
+.mc-desc .green{color:#4dff4d;}
+
+/* REDES */
+#redes{background:transparent;position:relative;z-index:2;}
+.social-grid{
+  display:flex;flex-wrap:wrap;gap:1.8rem;justify-content:center;
+}
+
+/* ── BASE CARD ── */
+.social-card{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;
+  background:rgba(5,3,14,0.75);
+  border:1px solid rgba(255,255,255,0.06);
+  padding:2.5rem 3rem;
+  text-decoration:none;color:var(--chrome);
+  min-width:200px;flex:1 1 180px;max-width:270px;
+  transition:transform 0.3s,box-shadow 0.3s,background 0.3s,border-color 0.3s;
+  position:relative;overflow:hidden;cursor:pointer;
+}
+
+/* Bottom bar */
+.social-card::before{
+  content:'';position:absolute;bottom:0;left:0;right:0;
+  height:3px;background:var(--card-color,var(--red));
+  transform:scaleX(0);transform-origin:left;transition:transform 0.35s;
+}
+.social-card:hover::before{transform:scaleX(1);}
+
+/* Radial glow bg */
+.social-card::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 110%,var(--card-glow,rgba(230,0,0,0.1)),transparent 70%);
+  opacity:0;transition:opacity 0.4s;pointer-events:none;
+}
+.social-card:hover::after{opacity:1;}
+
+/* ── LIVE STATUS TOOLTIP ── */
+.social-live{
+  position:absolute;top:0.7rem;left:50%;transform:translateX(-50%) translateY(-8px);
+  background:rgba(0,0,0,0.95);border:1px solid var(--card-color,#444);
+  color:var(--card-color,#aaa);
+  font-family:'Share Tech Mono',monospace;font-size:0.5rem;
+  letter-spacing:0.18em;padding:0.25rem 0.7rem;white-space:nowrap;
+  opacity:0;transition:opacity 0.25s,transform 0.25s;
+  pointer-events:none;z-index:10;
+}
+.social-card:hover .social-live{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── DISCORD — glitch + azul ── */
+.social-card.discord{
+  --card-color:#5865F2;
+  --card-glow:rgba(88,101,242,0.15);
+}
+.social-card.discord:hover{
+  border-color:#5865F2;
+  background:rgba(5,5,20,0.97);
+  transform:translateY(-7px);
+  box-shadow:0 0 0 1px #5865F2,0 20px 50px rgba(88,101,242,0.35),0 0 80px rgba(88,101,242,0.15);
+}
+.social-card.discord:hover svg{
+  filter:drop-shadow(0 0 12px #5865F2) drop-shadow(0 0 30px rgba(88,101,242,0.7));
+  animation:discord-glitch 0.6s steps(1) infinite;
+}
+@keyframes discord-glitch{
+  0%,100%{transform:none;filter:drop-shadow(0 0 12px #5865F2);}
+  20%{transform:translate(-3px,0);filter:drop-shadow(3px 0 #0ff) drop-shadow(-3px 0 #f0f);}
+  40%{transform:translate(3px,0);filter:drop-shadow(-3px 0 #0ff) drop-shadow(3px 0 #f0f);}
+  60%{transform:translate(-1px,2px);filter:drop-shadow(0 0 18px #5865F2);}
+  80%{transform:translate(1px,-1px);filter:drop-shadow(0 0 12px #5865F2);}
+}
+.social-card.discord:hover .social-name{
+  animation:name-glitch-d 0.5s steps(1) infinite;
+  color:#8ab4ff;
+}
+@keyframes name-glitch-d{
+  0%,100%{text-shadow:0 0 8px #5865F2;clip-path:none;}
+  25%{text-shadow:3px 0 #0ff,-3px 0 #f0f;clip-path:inset(0 0 60% 0);}
+  50%{text-shadow:-2px 0 #0ff,2px 0 #f0f;}
+  75%{text-shadow:0 0 8px #5865F2;}
+}
+
+/* ── YOUTUBE — scan de video ── */
+.social-card.youtube{
+  --card-color:#FF0000;
+  --card-glow:rgba(255,0,0,0.12);
+}
+/* Fake video scanline overlay */
+.social-card.youtube .yt-scan{
+  position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:repeating-linear-gradient(
+    to bottom,transparent,transparent 3px,rgba(255,0,0,0.03) 3px,rgba(255,0,0,0.03) 4px
+  );
+  opacity:0;transition:opacity 0.3s;
+}
+.social-card.youtube:hover .yt-scan{opacity:1;}
+/* Moving scan line */
+.social-card.youtube .yt-sweep{
+  position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(to right,transparent,rgba(255,0,0,0.6),transparent);
+  pointer-events:none;z-index:3;top:0;
+  opacity:0;transition:opacity 0.2s;
+  animation:yt-sweep-anim 1.2s linear infinite;
+}
+.social-card.youtube:hover .yt-sweep{opacity:1;}
+@keyframes yt-sweep-anim{from{top:0}to{top:100%}}
+/* REC badge */
+.social-card.youtube .yt-rec{
+  position:absolute;top:0.7rem;right:0.8rem;
+  display:flex;align-items:center;gap:0.3rem;
+  font-family:'Share Tech Mono',monospace;font-size:0.5rem;color:#ff4444;letter-spacing:0.15em;
+  opacity:0;transition:opacity 0.3s;
+}
+.social-card.youtube .yt-rec::before{
+  content:'';width:6px;height:6px;background:#ff0000;border-radius:50%;
+  animation:rec-blink 0.8s step-end infinite;
+}
+@keyframes rec-blink{0%,100%{opacity:1}50%{opacity:0}}
+.social-card.youtube:hover .yt-rec{opacity:1;}
+.social-card.youtube:hover{
+  border-color:#ff0000;
+  background:rgba(15,0,0,0.97);
+  transform:translateY(-7px);
+  box-shadow:0 0 0 1px #ff0000,0 20px 50px rgba(255,0,0,0.25),0 0 60px rgba(255,0,0,0.1);
+}
+.social-card.youtube:hover svg{
+  filter:drop-shadow(0 0 16px #ff0000) drop-shadow(0 0 40px rgba(255,0,0,0.5));
+}
+
+/* ── TIKTOK — neon raro ── */
+.social-card.tiktok{
+  --card-color:#00f2ea;
+  --card-glow:rgba(0,242,234,0.1);
+}
+.social-card.tiktok:hover{
+  border-color:#00f2ea;
+  background:rgba(0,10,12,0.97);
+  transform:translateY(-7px);
+  box-shadow:
+    0 0 0 1px #00f2ea,
+    0 0 30px rgba(0,242,234,0.3),
+    0 0 60px rgba(0,242,234,0.1),
+    0 20px 50px rgba(0,0,0,0.6),
+    inset 0 0 30px rgba(0,242,234,0.04);
+}
+.social-card.tiktok:hover svg{
+  filter:drop-shadow(2px 0 #ff004f) drop-shadow(-2px 0 #00f2ea) drop-shadow(0 0 20px #00f2ea);
+  animation:tiktok-chroma 0.15s steps(1) infinite;
+}
+@keyframes tiktok-chroma{
+  0%{filter:drop-shadow(2px 0 #ff004f) drop-shadow(-2px 0 #00f2ea) drop-shadow(0 0 20px #00f2ea);}
+  50%{filter:drop-shadow(-2px 0 #ff004f) drop-shadow(2px 0 #00f2ea) drop-shadow(0 0 25px rgba(255,0,79,0.5));}
+  100%{filter:drop-shadow(2px 0 #ff004f) drop-shadow(-2px 0 #00f2ea) drop-shadow(0 0 20px #00f2ea);}
+}
+.social-card.tiktok:hover .social-name{
+  background:linear-gradient(90deg,#ff004f,#00f2ea);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  text-shadow:none;
+  animation:neon-name-flicker 0.1s steps(1) 3;
+}
+/* Neon border pulse */
+.social-card.tiktok .tk-neon{
+  position:absolute;inset:0;pointer-events:none;
+  border:1px solid transparent;
+  animation:tk-neon-anim 2s linear infinite;
+  opacity:0;transition:opacity 0.3s;
+}
+.social-card.tiktok:hover .tk-neon{opacity:1;}
+@keyframes tk-neon-anim{
+  0%{box-shadow:inset 0 0 0 transparent;}
+  50%{box-shadow:inset 0 0 20px rgba(0,242,234,0.12),inset 0 0 40px rgba(255,0,79,0.06);}
+  100%{box-shadow:inset 0 0 0 transparent;}
+}
+
+.social-name{
+  font-family:'Orbitron',sans-serif;
+  font-size:0.8rem;letter-spacing:0.18em;text-transform:uppercase;color:#eee;
+  transition:color 0.3s,text-shadow 0.3s;
+}
+.social-handle{font-size:0.68rem;color:#555;letter-spacing:0.05em;transition:color 0.3s;}
+.social-card:hover .social-handle{color:#888;}
+.sub{
+  font-size:0.82rem;color:#555;
+  letter-spacing:0.12em;margin-bottom:3.5rem;
+  line-height:1.7;
+}
+
+/* PROFILE MODAL */
+#profile-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,0.95);
+  z-index:8000;display:none;align-items:center;justify-content:center;
+}
+#profile-modal.open{display:flex;}
+.profile-box{
+  background:linear-gradient(135deg,#0d0000,#0a0a0a);
+  border:1px solid var(--red);
+  border-top:3px solid var(--red);
+  padding:2.5rem;max-width:420px;width:90%;position:relative;
+  box-shadow:0 0 60px rgba(230,0,0,0.2);
+}
+.profile-box h3{font-family:'Orbitron',sans-serif;font-size:0.9rem;color:var(--yellow);margin-bottom:1.8rem;letter-spacing:0.12em;}
+.profile-avatar-wrap{text-align:center;margin-bottom:1.8rem;}
+.profile-avatar-wrap img{width:80px;height:80px;border-radius:50%;border:2px solid var(--red);object-fit:cover;}
+.profile-field{display:flex;flex-direction:column;gap:0.35rem;margin-bottom:1.2rem;}
+.profile-field label{font-size:0.58rem;letter-spacing:0.25em;color:rgba(230,0,0,0.7);text-transform:uppercase;}
+.profile-field input{
+  background:rgba(0,0,0,0.7);border:1px solid rgba(230,0,0,0.25);
+  color:var(--chrome);font-family:'Share Tech Mono',monospace;
+  font-size:0.85rem;padding:0.55rem 0.8rem;outline:none;width:100%;
+}
+.profile-field input:focus{border-color:var(--red);}
+.profile-stats{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:1.8rem;}
+.profile-stat{
+  background:rgba(230,0,0,0.05);
+  border:1px solid rgba(230,0,0,0.12);
+  padding:0.8rem;text-align:center;
+}
+.profile-stat .ps-val{font-family:'Orbitron',sans-serif;font-size:1.3rem;color:var(--yellow);}
+.profile-stat .ps-lbl{font-size:0.52rem;color:#444;letter-spacing:0.18em;text-transform:uppercase;}
+.modal-close{
+  position:absolute;top:0.9rem;right:0.9rem;
+  background:none;border:none;color:#444;font-size:1.1rem;cursor:pointer;
+  transition:color 0.2s;
+}
+.modal-close:hover{color:var(--red);}
+
+/* FOOTER */
+footer{
+  border-top:1px solid rgba(230,0,0,0.12);
+  padding:3rem 2rem 2rem;
+  text-align:center;font-size:0.68rem;color:#333;
+  letter-spacing:0.18em;
+  position:relative;overflow:hidden;
+  background:linear-gradient(180deg,transparent,rgba(0,0,5,0.7));
+  z-index:2;
+}
+footer img.foot-logo{
+  width:30px;opacity:0.2;
+  margin-bottom:1rem;display:block;
+  margin-left:auto;margin-right:auto;
+  filter:drop-shadow(0 0 6px rgba(230,0,0,0.3));
+}
+footer strong{color:var(--red);}
+footer .foot-copy{color:#333;line-height:2;}
+footer .foot-sys{font-size:0.55rem;opacity:0.25;margin-top:0.5rem;letter-spacing:0.2em;}
+.parade-wrap{
+  width:100%;overflow:hidden;height:75px;position:relative;
+  margin-bottom:2rem;
+  border-top:1px solid rgba(230,0,0,0.08);
+  border-bottom:1px solid rgba(230,0,0,0.08);
+  background:rgba(230,0,0,0.02);
+}
+.parade-inner{
+  display:flex;align-items:flex-end;gap:3.5rem;
+  animation:parade 20s linear infinite;
+  white-space:nowrap;width:max-content;position:relative;
+}
+@keyframes parade{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.parade-inner img{
+  height:58px;width:auto;image-rendering:pixelated;
+  filter:drop-shadow(0 0 8px rgba(230,0,0,0.6));
+  cursor:pointer;position:relative;
+  transition:filter 0.2s;
+}
+.parade-inner img:hover{filter:drop-shadow(0 0 16px rgba(255,208,0,0.8));}
+.badnik-target{
+  position:absolute;width:38px;height:38px;
+  background:rgba(255,0,0,0.1);border:2px solid red;border-radius:50%;
+  top:-42px;animation:target-pulse 0.9s ease-in-out infinite;pointer-events:none;
+}
+@keyframes target-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.25);opacity:0.5}}
+.badnik-explosion{
+  position:absolute;font-size:2.2rem;top:-32px;left:50%;
+  transform:translateX(-50%);
+  animation:explode 0.6s ease-out forwards;pointer-events:none;
+}
+@keyframes explode{0%{opacity:1;transform:translateX(-50%) scale(0.5)}100%{opacity:0;transform:translateX(-50%) scale(2.2)}}
+
+@media(max-width:600px){
+  .social-grid{gap:1rem;}
+  .social-card{min-width:140px;padding:1.8rem 1.2rem;}
+  #topnav{padding:0 0.8rem;}
+  #nav-logo-btn span{display:none;}
+  .nav-sprite-btn img{height:32px;}
+  .cat-grid{grid-template-columns:repeat(2,1fr);}
+  .badnik-card{padding:2.5rem 1.5rem;}
+  .mc-inner{padding:1.8rem;}
+  .hero-cta-wrap{flex-direction:column;align-items:center;}
+  .hero-cta-primary,.hero-cta-secondary{width:100%;max-width:320px;justify-content:center;font-size:0.85rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- STARFIELD -->
+<canvas id="starfield-canvas"></canvas>
+
+<!-- AUDIOS -->
+<audio id="bg-music" loop preload="auto"><source src="bg.mp3" type="audio/mpeg"></audio>
+<audio id="snd-muerte" preload="auto"><source src="muertebadnik.mp3" type="audio/mpeg"></audio>
+<audio id="snd-hue" preload="auto"><source src="hue.mp3" type="audio/mpeg"></audio>
+<audio id="snd-dead" preload="auto"><source src="sonicdeadorlive.mp3" type="audio/mpeg"></audio>
+<audio id="eg1" preload="auto"><source src="eggman1.mp3" type="audio/mpeg"></audio>
+<audio id="eg2" preload="auto"><source src="eggman2.mp3" type="audio/mpeg"></audio>
+<audio id="eg3" preload="auto"><source src="eggman3.mp3" type="audio/mpeg"></audio>
+<audio id="eg4" preload="auto"><source src="eggman4.mp3" type="audio/mpeg"></audio>
+<audio id="eg5" preload="auto"><source src="eggman5.mp3" type="audio/mpeg"></audio>
+
+<!-- INTRO -->
+<div id="intro-screen" onclick="enterSite()">
+  <img class="intro-logo" src="logo.png" alt="Imperio Eggman"/>
+  <div class="intro-line"></div>
+  <div class="intro-title">IMPERIO EGGMAN</div>
+  <div class="intro-line"></div>
+  <div class="intro-sub">[ Haz clic para entrar ]</div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div id="profile-modal">
+  <div class="profile-box">
+    <button class="modal-close" onclick="closeProfile()">✕</button>
+    <h3>// PERFIL DE BADNIK</h3>
+    <div class="profile-avatar-wrap">
+      <img id="profile-pic" src="logo.png" alt="Avatar"/>
+    </div>
+    <div class="profile-field">
+      <label>Nombre de Badnik</label>
+      <input id="profile-name" type="text" placeholder="Tu nombre..."/>
+    </div>
+    <div class="profile-field">
+      <label>Correo</label>
+      <input id="profile-email" type="text" readonly style="opacity:0.5;"/>
+    </div>
+    <div class="profile-stats">
+      <div class="profile-stat">
+        <div class="ps-val" id="ps-score">0</div>
+        <div class="ps-lbl">Mejor Puntaje</div>
+      </div>
+      <div class="profile-stat">
+        <div class="ps-val" id="ps-games">0</div>
+        <div class="ps-lbl">Partidas</div>
+      </div>
+    </div>
+    <button class="admin-btn" onclick="saveProfile()" style="width:100%;">GUARDAR PERFIL</button>
+    <br/><br/>
+    <button class="admin-btn" onclick="logoutUser()" style="width:100%;background:#333;">CERRAR SESIÓN</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="topnav">
+  <div id="nav-left">
+    <button id="nav-logo-btn" onclick="scrollToTop()">
+      <img src="logo.png" alt="Logo"/>
+      <span>Imperio Eggman</span>
+    </button>
+    <button id="ms-btn" class="nav-sprite-btn" onclick="playMetalSonic()">
+      <img src="metal-sonic.gif" alt="Metal Sonic"/>
+      <div class="sp-tip" id="ms-tip">¡Presiona a Metal Sonic!</div>
+    </button>
+    <button id="eggman-nav-btn" class="nav-sprite-btn" onclick="playEggman()">
+      <img src="eggman.gif" alt="Eggman"/>
+      <div class="sp-tip" id="eg-tip">¡Presiona al Doctor!</div>
+    </button>
+  </div>
+  <div id="nav-right">
+    <button id="user-nav-btn" onclick="openProfile()">
+      <img id="user-avatar" src="logo.png" alt="Avatar"/>
+      <span id="user-name-nav">BADNIK</span>
+    </button>
+    <div id="nav-menu-wrap">
+      <button id="nav-toggle" onclick="toggleNav()">&#9776; MENU</button>
+      <div id="nav-dropdown">
+        <a href="#sobre" onclick="closeNav()"><img class="nav-icon-img" src="orbot.png" alt="Orbot"/> Sobre Nosotros</a>
+        <a href="#badnik" onclick="closeNav()"><img class="nav-icon-img" src="cubot.png" alt="Cubot"/> Únete</a>
+        <a href="#minecraft" onclick="closeNav()"><img class="nav-icon-img" src="metal-sonic2.gif" alt=""/> Minecraft</a>
+        <a href="#redes" onclick="closeNav()"><img class="nav-icon-img" src="eggman-saxophone.gif" alt=""/> Redes</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="status-bar">
+  <span>&#9654; 🔥 BIENVENIDO AL IMPERIO EGGMAN &#9664; &nbsp;&nbsp;&nbsp; SISTEMA OPERATIVO: EGG-NET v9.9.9 &nbsp;&nbsp;&nbsp; BADNIKS ACTIVOS: 999+ &nbsp;&nbsp;&nbsp; BLAZE DEJA LAS MULTICUENTAS &nbsp;&nbsp;&nbsp; CUBOT CRUZIFICADO CORRECTAMENTE &nbsp;&nbsp;&nbsp; SONIC: NEUTRALIZADO (pronto™) &nbsp;&nbsp;&nbsp; DESCANZA EN PAZ PACO EL DINOSAURIO &nbsp;&nbsp;&nbsp; FOCUSEN A LA AMY 🔥 &nbsp;&nbsp;&nbsp; MUCHACHO ME FALTA PA LA COCACOLA &nbsp;&nbsp;&nbsp; NERFEN A SHADOW &nbsp;&nbsp;&nbsp; DEJEN DE MIGAJEAR MUCHACHO &nbsp;&nbsp;&nbsp; EL DR. EGGMAN CONQUISTARA EL MUNDO 🔥 &nbsp;&nbsp;&nbsp;</span>
+</div>
+
+<button id="music-btn" onclick="toggleMusic()">&#9654; MUSICA</button>
+<div id="vol-wrap">
+  <label>VOL</label>
+  <input id="vol-slider" type="range" min="0" max="1" step="0.01" value="0.6" oninput="setVolume(this.value)">
+</div>
+
+<!-- ORBOT BUBBLE -->
+<div id="orbot-bubble" onclick="nextOrbotMsg()">
+  <div id="orbot-msg">Cargando transmisión...</div>
+  <img src="orbot.png" alt="Orbot"/>
+</div>
+
+<div class="corner-tl"></div>
+<div class="corner-br"></div>
+
+<!-- HERO -->
+<header>
+  <canvas id="hero-canvas"></canvas>
+  <div class="gear-ring"></div>
+  <div class="gear-ring"></div>
+  <div class="gear-ring"></div>
+  <div class="logo-wrap">
+    <div class="badge">&#9632; Sitio Oficial &#9632;</div>
+    <img class="hero-logo" src="logo.png" alt="Eggman Logo"/>
+    <h1><span>Imperio</span>Eggman</h1>
+    <p class="tagline">« El futuro es robótico. El futuro soy yo. »</p>
+  </div>
+  <div class="hero-cta-wrap">
+    <a class="hero-cta-primary" href="https://discord.gg/jqCgt7CCzv" target="_blank" rel="noopener">⚡ UNIRSE AL IMPERIO</a>
+    <a class="hero-cta-secondary" href="#redes">📡 VER CONTENIDO</a>
+  </div>
+  <div class="cat-grid">
+    <a class="cat-card" href="#minecraft"><div class="cat-icon"><img src="knuckles.webp" style="height:2.2rem;width:auto;image-rendering:pixelated;filter:drop-shadow(0 0 6px rgba(230,0,0,0.5));"></div><div class="cat-label">Minecraft</div><div class="cat-desc">Servidor Eggmanland</div></a>
+    <a class="cat-card" href="#redes"><div class="cat-icon"><img src="amy.webp" style="height:2.2rem;width:auto;image-rendering:pixelated;filter:drop-shadow(0 0 6px rgba(255,100,150,0.5));"></div><div class="cat-label">Redes</div><div class="cat-desc">Síguenos en todas partes</div></a>
+    <a class="cat-card" href="#badnik"><div class="cat-icon"><img src="tails.webp" style="height:2.2rem;width:auto;image-rendering:pixelated;filter:drop-shadow(0 0 6px rgba(255,180,0,0.5));"></div><div class="cat-label">Únete</div><div class="cat-desc">Conviértete en Badnik</div></a>
+  </div>
+  <div class="scroll-hint">&#9660; DESPLAZA PARA UNIRTE &#9660;</div>
+</header>
+
+<!-- SOBRE -->
+<section id="sobre">
+  <div class="section-wrap">
+    <div class="divider"><span class="divider-icon">&#9632;</span></div>
+    <p class="section-label">// archivo_001 — Sobre nosotros</p>
+    <h2>¿Qué es el Imperio Eggman?</h2>
+    <div class="desc-card">
+      <p>Bienvenido, ciudadano. Estás en la <strong>página oficial del Imperio Eggman</strong>, el reino tecnológico más avanzado, más poderoso y más glorioso que el mundo jamás ha conocido.<br/><br/>
+      Fundado por el genio supremo <strong>Dr. "Eggman" Robotnik</strong>, este imperio representa el pináculo de la ingeniería, la robótica y la dominación global.<br/><br/>
+      Aquí encontrarás las últimas noticias del Imperio, recursos para futuros Badniks, y el canal oficial donde el <strong>Doctor comparte su visión de un mundo mecanizado, perfecto y bajo su mandato eterno</strong>. Porque si el futuro va a ser robótico, debería llevar nuestra marca.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ÚNETE -->
+<section id="badnik" style="text-align:center;">
+  <div class="section-wrap">
+    <div class="divider"><span class="divider-icon">&#9632;</span></div>
+    <div class="badnik-card">
+      <p class="section-label">// archivo_005 — Reclutamiento</p>
+      <h2>Mas Eggman que nunca,<br/>¿Qué esperas para ser un Badnik?</h2>
+      <p>El Imperio necesita soldados leales, eficientes y a prueba de Sonic. Únete a las filas del ejército mecanizado más temido del planeta. Tu transformación te espera.</p>
+      <a class="cta-btn" href="https://discord.gg/jqCgt7CCzv" target="_blank" rel="noopener">UNIRSE AL IMPERIO</a>
+    </div>
+  </div>
+</section>
+
+<!-- MINECRAFT -->
+<section id="minecraft">
+  <div class="section-wrap">
+    <div class="divider"><span class="divider-icon">&#9632;</span></div>
+    <div class="mc-card">
+      <div class="mc-inner">
+        <div class="mc-top">
+          <div class="mc-badge">Servidor en Mantenimiento</div>
+          <p class="section-label">// archivo_006 — Eggmanland</p>
+          <h2>Nuestro Servidor de Minecraft</h2>
+        </div>
+        <div class="mc-img-wrap"><img src="eggmanland.png" alt="Eggmanland"/></div>
+        <p class="mc-desc">El Imperio ha expandido su dominio al mundo cúbico. <strong>Eggmanland</strong> es el servidor oficial de Minecraft del Imperio Eggman, donde la tecnología y la conquista no tienen límites.<br/><br/>
+        Construye, lucha y domina junto a los mejores Badniks del servidor. ¿Tienes lo que se necesita para sobrevivir en territorio del <strong>Dr. Robotnik</strong>?<br/><br/>
+        <span class="green">&#9632; Únete a nuestro Discord para obtener la IP del servidor.</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REDES -->
+<section id="redes">
+  <div class="section-wrap">
+    <div class="divider"><span class="divider-icon">&#9632;</span></div>
+    <div style="text-align:center;">
+      <p class="section-label">// archivo_007 — Transmisiones</p>
+      <h2>Síguenos en nuestras redes</h2>
+      <p class="sub">Mantente al tanto de las conquistas del Imperio en todas las plataformas.</p>
+      <div class="social-grid">
+        <a class="social-card discord" href="https://discord.gg/jqCgt7CCzv" target="_blank" rel="noopener">
+          <div class="social-live">// ÚLTIMA TRANSMISIÓN DETECTADA...</div>
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.012.043.028.055a19.9 19.9 0 0 0 5.993 3.03.077.077 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+          <span class="social-name">Discord</span><span class="social-handle">Servidor Oficial</span>
+        </a>
+        <a class="social-card youtube" href="https://youtube.com/@eggmanmaseggman?si=hbAhSSTjxgfA8dSa" target="_blank" rel="noopener">
+          <div class="social-live">// CANAL EN LÍNEA — TRANSMITIENDO</div>
+          <div class="yt-scan"></div>
+          <div class="yt-sweep"></div>
+          <div class="yt-rec">REC</div>
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          <span class="social-name">YouTube</span><span class="social-handle">@eggmanmaseggman</span>
+        </a>
+        <a class="social-card tiktok" href="https://www.tiktok.com/@ourcome.randoms?_r=1&_t=ZS-95pGW3AnQzk" target="_blank" rel="noopener">
+          <div class="social-live">// SEÑAL NEON ACTIVA</div>
+          <div class="tk-neon"></div>
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="#ffffff"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.76a4.85 4.85 0 01-1.01-.07z"/></svg>
+          <span class="social-name">TikTok</span><span class="social-handle">@ourcome.randoms</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="parade-wrap">
+    <div class="parade-inner" id="parade-inner">
+      <img src="motobug.gif" alt="Motobug" onclick="badnikClick(this)"/>
+      <img src="crab.gif" alt="Crab" onclick="badnikClick(this)"/>
+      <img src="motobug.gif" alt="Motobug" onclick="badnikClick(this)"/>
+      <img src="crab.gif" alt="Crab" onclick="badnikClick(this)"/>
+      <img src="motobug.gif" alt="Motobug" onclick="badnikClick(this)"/>
+      <img src="crab.gif" alt="Crab" onclick="badnikClick(this)"/>
+      <img src="motobug.gif" alt="Motobug" onclick="badnikClick(this)"/>
+      <img src="crab.gif" alt="Crab" onclick="badnikClick(this)"/>
+      <img src="motobug.gif" alt="Motobug" onclick="badnikClick(this)"/>
+      <img src="crab.gif" alt="Crab" onclick="badnikClick(this)"/>
+      <img src="motobug.gif" alt="Motobug" onclick="badnikClick(this)"/>
+      <img src="crab.gif" alt="Crab" onclick="badnikClick(this)"/>
+    </div>
+  </div>
+  <img class="foot-logo" src="logo.png" alt=""/>
+  <p class="foot-copy">© <strong>IMPERIO EGGMAN</strong> — Todos los mundos reservados. Sonic no está invitado.</p>
+  <p class="foot-sys">EGG-NET SYSTEM v9.9.9 · DOMINIO MUNDIAL EN PROGRESO™</p>
+</footer>
+
+
+
+<script>
+// ══ AUDIO ENGINE ══
+const bgMusic   = document.getElementById('bg-music');
+const sndMuerte = document.getElementById('snd-muerte');
+const sndHue    = document.getElementById('snd-hue');
+const sndDead   = document.getElementById('snd-dead');
+const eggSnds   = ['eg1','eg2','eg3','eg4','eg5'].map(id=>document.getElementById(id));
+bgMusic.volume  = 0.6;
+let siteEntered = false, musicOn = true, sfxCtx = null;
+let msLocked = false, egLocked = false;
+
+function getSfxCtx(){if(!sfxCtx)sfxCtx=new(window.AudioContext||window.webkitAudioContext)();return sfxCtx;}
+function playHover(){const ac=getSfxCtx(),t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.setValueAtTime(880,t);o.frequency.linearRampToValueAtTime(1200,t+0.04);g.gain.setValueAtTime(0.07,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.07);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+0.08);}
+function playClick(){const ac=getSfxCtx(),t=ac.currentTime;[880,1320].forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type='square';o.frequency.value=f;const st=t+i*0.06;g.gain.setValueAtTime(0,st);g.gain.linearRampToValueAtTime(0.09,st+0.01);g.gain.linearRampToValueAtTime(0,st+0.055);o.connect(g);g.connect(ac.destination);o.start(st);o.stop(st+0.07);});const o2=ac.createOscillator(),g2=ac.createGain();o2.type='triangle';o2.frequency.setValueAtTime(200,t);o2.frequency.exponentialRampToValueAtTime(60,t+0.1);g2.gain.setValueAtTime(0.15,t);g2.gain.exponentialRampToValueAtTime(0.001,t+0.12);o2.connect(g2);g2.connect(ac.destination);o2.start(t);o2.stop(t+0.14);}
+
+function playMetalSonic(){if(!siteEntered||msLocked)return;msLocked=true;const btn=document.getElementById('ms-btn');btn.classList.add('locked');document.getElementById('ms-tip').textContent='...';const clip=Math.random()<0.5?sndHue:sndDead;clip.currentTime=0;clip.volume=1;clip.play();clip.onended=()=>{msLocked=false;btn.classList.remove('locked');document.getElementById('ms-tip').textContent='¡Presiona a Metal Sonic!';clip.onended=null;};}
+function playEggman(){if(!siteEntered||egLocked)return;egLocked=true;const btn=document.getElementById('eggman-nav-btn');btn.classList.add('locked');document.getElementById('eg-tip').textContent='...';const clip=eggSnds[Math.floor(Math.random()*eggSnds.length)];eggSnds.forEach(s=>{s.pause();s.currentTime=0;});clip.currentTime=0;clip.volume=1;clip.play();clip.onended=()=>{egLocked=false;btn.classList.remove('locked');document.getElementById('eg-tip').textContent='¡Presiona al Doctor!';clip.onended=null;};}
+
+function startMusic(){bgMusic.currentTime=0;bgMusic.play().catch(()=>{});musicOn=true;updateMusicBtn();}
+function toggleMusic(){if(musicOn){bgMusic.pause();musicOn=false;}else{bgMusic.play();musicOn=true;}updateMusicBtn();playClick();}
+function setVolume(v){bgMusic.volume=parseFloat(v);}
+function updateMusicBtn(){const btn=document.getElementById('music-btn');btn.textContent=musicOn?'⏸ MUSICA':'▶ MUSICA';musicOn?btn.classList.add('playing'):btn.classList.remove('playing');}
+
+function enterSite(){
+  if(siteEntered)return; siteEntered=true;
+  sndMuerte.currentTime=0;sndMuerte.volume=1;sndMuerte.play().catch(()=>{});
+  const intro=document.getElementById('intro-screen');
+  intro.style.opacity='0';
+  setTimeout(()=>{
+    intro.style.display='none';
+    document.getElementById('music-btn').style.display='block';
+    document.getElementById('vol-wrap').style.display='flex';
+    document.getElementById('orbot-bubble').style.display='flex';
+    document.querySelectorAll('.nav-sprite-btn').forEach(b=>b.style.display='inline-flex');
+    updateMusicBtn();
+    startOrbotCycle();
+    initBadnikTargets();
+  },900);
+  setTimeout(()=>startMusic(),1200);
+}
+
+function toggleNav(){document.getElementById('nav-dropdown').classList.toggle('open');if(siteEntered)playClick();}
+function closeNav(){document.getElementById('nav-dropdown').classList.remove('open');if(siteEntered)playClick();}
+function scrollToTop(){window.scrollTo({top:0,behavior:'smooth'});if(siteEntered)playClick();}
+document.addEventListener('click',e=>{if(!e.target.closest('#nav-menu-wrap'))document.getElementById('nav-dropdown').classList.remove('open');});
+
+document.addEventListener('DOMContentLoaded',()=>{
+  let lastHover=0;
+  document.querySelectorAll('a,button,.cta-btn').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{if(!siteEntered)return;const now=Date.now();if(now-lastHover>100){playHover();lastHover=now;}});
+    el.addEventListener('click',()=>{if(siteEntered)playClick();});
+  });
+  document.addEventListener('click',e=>{if(!siteEntered)return;if(!e.target.closest('a,button,.cta-btn'))playClick();});
+});
+
+// ── ORBOT BUBBLE ──
+const orbotMsgs = [
+  "Blaze deja las multicuentas ya...",
+  "El Dr. Eggman conquistará el mundo.",
+  "Cubot fue cruzificado correctamente.",
+  "Nerfen a Shadow urgente.",
+  "Dejen de migajear, muchacho.",
+  "Focusen a la Amy.",
+  "Sonic será neutralizado. Pronto™",
+  "Badnik activo. Saludos desde el EGG-NET.",
+  "Muchacho me falta pa la cocacola.",
+  "El Imperio vigila. Siempre.",
+];
+let orbotIdx = 0;
+function nextOrbotMsg(){
+  orbotIdx = (orbotIdx + 1) % orbotMsgs.length;
+  document.getElementById('orbot-msg').textContent = orbotMsgs[orbotIdx];
+}
+function startOrbotCycle(){
+  document.getElementById('orbot-msg').textContent = orbotMsgs[0];
+  setInterval(nextOrbotMsg, 5000);
+}
+
+// ── BADNIK TARGETS (30% probability) ──
+function initBadnikTargets(){
+  const imgs = document.querySelectorAll('.parade-inner img');
+  imgs.forEach(img => {
+    if(Math.random() < 0.3){
+      const tgt = document.createElement('div');
+      tgt.className = 'badnik-target';
+      img.parentElement.style.position='relative';
+      img.style.position='relative';
+      img.insertAdjacentElement('afterend',tgt);
+    }
+  });
+}
+function badnikClick(img){
+  if(!siteEntered)return;
+  sndMuerte.currentTime=0; sndMuerte.play().catch(()=>{});
+  const exp = document.createElement('div');
+  exp.className='badnik-explosion'; exp.textContent='💥';
+  img.parentElement.insertBefore(exp, img);
+  img.style.display='none';
+  setTimeout(()=>{ exp.remove(); img.style.display=''; },700);
+}
+
+// ══ STARFIELD ENGINE ══
+(function(){
+  const canvas = document.getElementById('starfield-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H;
+
+  // Star data
+  const STAR_COUNT = 320;
+  const stars = [];
+
+  // Shooting stars
+  const shoots = [];
+
+  function resize(){
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = document.body.scrollHeight || window.innerHeight;
+    // Re-init stars on resize
+    stars.length = 0;
+    for(let i = 0; i < STAR_COUNT; i++) stars.push(makeStar(true));
+  }
+
+  function makeStar(anywhere){
+    const size = Math.random() < 0.08 ? (Math.random()*2+1.5) :
+                 Math.random() < 0.3  ? (Math.random()*1.2+0.7) :
+                                        (Math.random()*0.6+0.2);
+    // Color: mostly white/blue-white, some gold, rare red
+    const rnd = Math.random();
+    let color;
+    if(rnd < 0.55)      color = `255,255,255`;
+    else if(rnd < 0.75) color = `200,215,255`;  // blue-white
+    else if(rnd < 0.88) color = `255,240,180`;  // warm gold
+    else if(rnd < 0.95) color = `255,200,120`;  // orange
+    else                color = `255,100,100`;  // red accent
+
+    return {
+      x: Math.random() * (W||1920),
+      y: anywhere ? Math.random() * (H||4000) : -10,
+      size,
+      color,
+      baseAlpha: Math.random()*0.5 + 0.35,
+      alpha: 0,
+      targetAlpha: Math.random()*0.5 + 0.35,
+      twinkleSpeed: 0.008 + Math.random()*0.025,
+      twinklePhase: Math.random()*Math.PI*2,
+      // fade in/out lifecycle
+      life: anywhere ? Math.random() : 0,
+      lifeSpeed: 0.0008 + Math.random()*0.001,
+      state: anywhere ? (Math.random()<0.5?'alive':'fading') : 'fadein',
+    };
+  }
+
+  function makeShoot(){
+    return {
+      x: Math.random()*W*1.2 - W*0.1,
+      y: Math.random()*H*0.4,
+      len: 80 + Math.random()*180,
+      speed: 8 + Math.random()*14,
+      angle: Math.PI/5 + Math.random()*Math.PI/8,
+      alpha: 1,
+      fade: 0.015 + Math.random()*0.015,
+    };
+  }
+
+  function drawStars(){
+    ctx.clearRect(0, 0, W, H);
+
+    // Subtle nebula clouds
+    const neb = [
+      {x:W*0.3, y:H*0.15, r:W*0.35, c:'rgba(100,0,150,0.04)'},
+      {x:W*0.75, y:H*0.08, r:W*0.28, c:'rgba(0,30,120,0.05)'},
+      {x:W*0.5, y:H*0.35, r:W*0.5, c:'rgba(180,0,0,0.035)'},
+      {x:W*0.2, y:H*0.55, r:W*0.3, c:'rgba(60,0,100,0.03)'},
+    ];
+    for(const n of neb){
+      const g = ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);
+      g.addColorStop(0, n.c);
+      g.addColorStop(1,'transparent');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+      ctx.fill();
+    }
+
+    // Stars
+    for(const s of stars){
+      // lifecycle
+      if(s.state==='fadein'){
+        s.life = Math.min(1, s.life + s.lifeSpeed*3);
+        if(s.life>=1) s.state='alive';
+      } else if(s.state==='alive'){
+        s.life = Math.min(1, s.life + s.lifeSpeed);
+        // random chance to start fading
+        if(Math.random() < 0.0002) s.state='fading';
+      } else if(s.state==='fading'){
+        s.life = Math.max(0, s.life - s.lifeSpeed*2);
+        if(s.life<=0){
+          // respawn at random position
+          Object.assign(s, makeStar(true));
+          s.state='fadein'; s.life=0;
+        }
+      }
+
+      s.twinklePhase += s.twinkleSpeed;
+      const twinkle = 0.55 + 0.45*Math.sin(s.twinklePhase);
+      const a = s.baseAlpha * twinkle * s.life;
+      if(a < 0.01) continue;
+
+      // Glow for bigger stars
+      if(s.size > 1.2){
+        const glow = ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.size*5);
+        glow.addColorStop(0, `rgba(${s.color},${a*0.6})`);
+        glow.addColorStop(0.4, `rgba(${s.color},${a*0.15})`);
+        glow.addColorStop(1, `rgba(${s.color},0)`);
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size*5, 0, Math.PI*2);
+        ctx.fill();
+        // Cross sparkle for large stars
+        if(s.size > 1.8){
+          ctx.strokeStyle = `rgba(${s.color},${a*0.4})`;
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(s.x-s.size*8,s.y); ctx.lineTo(s.x+s.size*8,s.y);
+          ctx.moveTo(s.x,s.y-s.size*8); ctx.lineTo(s.x,s.y+s.size*8);
+          ctx.stroke();
+        }
+      }
+      // Core dot
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${s.color},${Math.min(a*1.5,1)})`;
+      ctx.fill();
+    }
+
+    // Shooting stars
+    for(let i = shoots.length-1; i>=0; i--){
+      const s = shoots[i];
+      s.x += Math.cos(s.angle)*s.speed;
+      s.y += Math.sin(s.angle)*s.speed;
+      s.alpha -= s.fade;
+      if(s.alpha <= 0){ shoots.splice(i,1); continue; }
+
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      ctx.rotate(s.angle);
+      const sg = ctx.createLinearGradient(0,0,-s.len,0);
+      sg.addColorStop(0, `rgba(255,255,255,${s.alpha})`);
+      sg.addColorStop(0.3, `rgba(255,230,180,${s.alpha*0.5})`);
+      sg.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.strokeStyle = sg;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.lineTo(-s.len,0);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Random shooting star spawn
+    if(Math.random() < 0.003) shoots.push(makeShoot());
+
+    requestAnimationFrame(drawStars);
+  }
+
+  // Resize when page content changes height
+  const ro = new ResizeObserver(()=>{
+    H = canvas.height = document.body.scrollHeight;
+  });
+  ro.observe(document.body);
+
+  window.addEventListener('resize', resize);
+  resize();
+  drawStars();
+})();
+
+// ══ HERO PARTICLE ENGINE ══
+(function(){
+  const canvas = document.getElementById('hero-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [], energyNodes = [];
+  
+  function resize(){
+    W = canvas.width = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  
+  // Particle types: sparks, floats, energy bursts
+  for(let i = 0; i < 80; i++){
+    particles.push({
+      x: Math.random()*1920, y: Math.random()*1080,
+      vx: (Math.random()-0.5)*0.4,
+      vy: (Math.random()-0.5)*0.4 - 0.1,
+      size: Math.random()*1.8 + 0.3,
+      alpha: Math.random()*0.6 + 0.1,
+      color: Math.random()<0.7 ? `rgba(230,${Math.floor(Math.random()*30)},0,` : `rgba(255,${180+Math.floor(Math.random()*75)},0,`,
+      pulse: Math.random()*Math.PI*2,
+      pulseSpeed: 0.02 + Math.random()*0.04,
+      type: Math.random() < 0.15 ? 'spark' : 'float'
+    });
+  }
+  
+  // Energy node connections
+  for(let i = 0; i < 12; i++){
+    energyNodes.push({
+      x: Math.random()*1920, y: Math.random()*1080,
+      vx: (Math.random()-0.5)*0.3,
+      vy: (Math.random()-0.5)*0.3,
+      r: Math.random()*2 + 1,
+    });
+  }
+  
+  let frame = 0;
+  function draw(){
+    frame++;
+    ctx.clearRect(0, 0, W, H);
+    
+    // Draw energy connections
+    for(let i = 0; i < energyNodes.length; i++){
+      const n = energyNodes[i];
+      n.x += n.vx; n.y += n.vy;
+      if(n.x < 0 || n.x > W) n.vx *= -1;
+      if(n.y < 0 || n.y > H) n.vy *= -1;
+      
+      for(let j = i+1; j < energyNodes.length; j++){
+        const m = energyNodes[j];
+        const dx = m.x - n.x, dy = m.y - n.y;
+        const dist = Math.sqrt(dx*dx+dy*dy);
+        if(dist < 220){
+          const alpha = (1 - dist/220) * 0.12;
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(230,0,0,${alpha})`;
+          ctx.lineWidth = 0.5;
+          ctx.moveTo(n.x, n.y);
+          ctx.lineTo(m.x, m.y);
+          ctx.stroke();
+        }
+      }
+      // Node dot
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(230,0,0,0.3)';
+      ctx.fill();
+    }
+    
+    // Draw particles
+    for(const p of particles){
+      p.pulse += p.pulseSpeed;
+      p.x += p.vx;
+      p.y += p.vy;
+      if(p.x < -10) p.x = W+10;
+      if(p.x > W+10) p.x = -10;
+      if(p.y < -10) p.y = H+10;
+      if(p.y > H+10) p.y = -10;
+      
+      const pulseAlpha = p.alpha * (0.5 + 0.5 * Math.sin(p.pulse));
+      
+      if(p.type === 'spark'){
+        // Elongated spark
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(Math.atan2(p.vy, p.vx));
+        const grad = ctx.createLinearGradient(-8,0,8,0);
+        grad.addColorStop(0,'transparent');
+        grad.addColorStop(0.5, p.color + pulseAlpha*1.5 + ')');
+        grad.addColorStop(1,'transparent');
+        ctx.fillStyle = grad;
+        ctx.fillRect(-8, -0.5, 16, 1);
+        ctx.restore();
+      } else {
+        // Glowing dot
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+        const grd = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.size*3);
+        grd.addColorStop(0, p.color + Math.min(pulseAlpha*2,1) + ')');
+        grd.addColorStop(1, p.color + '0)');
+        ctx.fillStyle = grd;
+        ctx.fill();
+      }
+    }
+    
+    // Occasional energy burst from center
+    if(frame % 120 < 8){
+      const t = (frame % 120) / 8;
+      const cx = W/2, cy = H/2;
+      const r = t * 200;
+      const alpha = (1-t) * 0.15;
+      const burst = ctx.createRadialGradient(cx,cy,r*0.7,cx,cy,r);
+      burst.addColorStop(0,'rgba(230,0,0,0)');
+      burst.addColorStop(0.7,`rgba(230,0,0,${alpha})`);
+      burst.addColorStop(1,'rgba(230,0,0,0)');
+      ctx.beginPath();
+      ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.fillStyle = burst;
+      ctx.fill();
+    }
+    
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+window.addEventListener('resize', ()=>{
+  const c = document.getElementById('hero-canvas');
+  if(c){c.width=c.offsetWidth;c.height=c.offsetHeight;}
+});
+
+
+let currentScene='greenhill';
+const SCENES={
+  greenhill:{bg:'#1a8a1a',ground:'#5a3a1a',sky:'#4488ff'},
+  eggbase:{bg:'#1a0a0a',ground:'#333',sky:'#110000'},
+  city:{bg:'#2a2a4a',ground:'#444',sky:'#334'}
+};
+const CHARS=[
+  {name:'Sonic',pts:5,color:'#1166ff',speed:3,size:22},
+  {name:'Tails',pts:3,color:'#ffaa00',speed:2,size:20},
+  {name:'Knuckles',pts:2,color:'#cc0000',speed:1.5,size:24}
+];
+
+window.setScene=(s)=>{
+  currentScene=s;
+  document.querySelectorAll('.scene-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(s.substring(0,3))));
+};
+
+</script>
+</body>
+</html>
